@@ -1,5 +1,5 @@
 [workspace]
-members = []
+members = ["game-physics", "game-combat"]
 resolver = "2"
 
 [workspace.package]
@@ -8,11 +8,17 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/jbcom/rust-cosmic-cults"
 homepage = "https://github.com/jbcom/rust-cosmic-cults"
+documentation = "https://github.com/jbcom/rust-cosmic-cults"
 keywords = ["game", "rts", "lovecraft", "bevy", "wasm"]
 categories = ["games", "wasm"]
 
 [workspace.dependencies]
-# Core Bevy engine
 bevy = { version = "0.16", default-features = false }
-
-# To be added as crates are migrated
+bevy_rapier3d = "0.31"
+glam = "0.30"
+smallvec = "1.15"
+ahash = "0.8"
+rand = "0.9"
+serde = { version = "1.0", features = ["derive"] }
+wasm-bindgen = "0.2"
+web-sys = "0.3"
