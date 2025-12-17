@@ -1,0 +1,26 @@
+# Hadolint configuration for Rust development containers
+# https://github.com/hadolint/hadolint#configure
+
+failure-threshold: warning
+format: tty
+
+# Ignore rules that don't apply to dev containers
+ignored:
+  - DL3008  # Pin package versions (OK for dev with latest)
+  - DL3009  # Delete apt cache (handled automatically)
+  - DL3015  # Avoid additional packages (OK for comprehensive dev)
+
+# Override severity levels
+override:
+  warning:
+    - DL3059  # Multiple consecutive RUN
+  error:
+    - DL3020  # Use COPY instead of ADD (security)
+    - DL3002  # Last USER should not be root (security)
+
+# Trusted registries
+trustedRegistries:
+  - docker.io
+  - registry.hub.docker.com
+
+strictlabels: false

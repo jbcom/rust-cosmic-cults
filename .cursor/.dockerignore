@@ -1,0 +1,36 @@
+# Rust build artifacts
+target/
+Cargo.lock
+.cargo/
+.rustup/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+memory-bank/
+
+# Logs and temp files
+*.log
+*.tmp
+.env
+.env.local
+
+# Build outputs
+**/target/
+**/node_modules/
