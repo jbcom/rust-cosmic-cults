@@ -112,6 +112,8 @@ pub struct MovementCommandEvent {
     pub command: MovementCommand,
 }
 
+impl bevy::prelude::Message for MovementCommandEvent {}
+
 #[derive(Clone, Debug)]
 pub enum MovementCommand {
     MoveTo {
