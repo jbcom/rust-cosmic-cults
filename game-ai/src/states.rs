@@ -364,10 +364,13 @@ fn execute_flee_state(
     movement_events: &mut MessageWriter<MovementCommandEvent>,
 ) {
     // Move away from danger towards home position
+    // Use normalize_or_zero to prevent NaN when positions overlap
     let flee_direction = if let Some(enemy_pos) = state_machine.state_data.last_enemy_position {
-        (transform.translation - enemy_pos).normalize()
+        let diff = transform.translation - enemy_pos;
+        diff.normalize_or(Vec3::new(1.0, 0.0, 0.0)) // Default to moving along X if overlapping
     } else {
-        (state_machine.state_data.home_position - transform.translation).normalize()
+        let diff = state_machine.state_data.home_position - transform.translation;
+        diff.normalize_or(Vec3::new(0.0, 0.0, 1.0)) // Default to moving along Z if at home
     };
 
     let flee_position = transform.translation + flee_direction * 20.0;
