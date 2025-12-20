@@ -17,9 +17,17 @@ categories = ["games", "wasm"]
 # Core Bevy engine - latest stable
 bevy = { version = "0.17", default-features = false }
 avian3d = "0.4"
-# bevy_rapier3d = "0.32"
+
+# AI/Game Logic - USE THESE INSTEAD OF CUSTOM IMPLEMENTATIONS
+# big-brain 0.23 (Bevy 0.17) not on crates.io yet - use git
+big-brain = { git = "https://github.com/zkat/big-brain.git", tag = "v0.23.0" }
+seldom_state = "0.15"        # State machines (replaces custom states.rs)
+bevy_behave = "0.4"          # Behavior trees (replaces custom behaviors.rs)
+
+# RNG with proper WASM support
 bevy_rand = { version = "0.12", features = ["wyrand"] }
 bevy_prng = { version = "0.12", features = ["wyrand"] }
+rand_core = "0.9"
 
 # Math and utilities
 glam = "0.30"

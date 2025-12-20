@@ -14,6 +14,11 @@ categories.workspace = true
 # Core Bevy engine (minimal features for AI systems)
 bevy = { workspace = true, default-features = false }
 
+# AI Libraries - PROPER IMPLEMENTATIONS
+big-brain = { workspace = true }      # Utility AI
+seldom_state = { workspace = true }   # State machines
+bevy_behave = { workspace = true }    # Behavior trees
+
 # Game physics integration for movement and collision
 game-physics = { path = "../game-physics" }
 

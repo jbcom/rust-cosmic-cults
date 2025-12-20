@@ -4,6 +4,7 @@ use crate::damage::{DamageEvent, DeathEvent};
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
+use rand::Rng;
 
 // Visual effect components
 #[derive(Component)]
@@ -642,31 +643,7 @@ fn color_to_emissive(color: Color) -> LinearRgba {
     LinearRgba::rgb(srgba.red, srgba.green, srgba.blue)
 }
 
-// Add rand module for simple random numbers
-mod rand {
-    use std::sync::atomic::{AtomicU32, Ordering};
-
-    static SEED: AtomicU32 = AtomicU32::new(0x12345678);
-
-    pub fn random<T>() -> T
-    where
-        T: Random,
-    {
-        T::random()
-    }
-
-    pub trait Random {
-        fn random() -> Self;
-    }
-
-    impl Random for f32 {
-        fn random() -> Self {
-            let mut seed = SEED.load(Ordering::Relaxed);
-            seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
-            SEED.store(seed, Ordering::Relaxed);
-            (seed as f32) / (u32::MAX as f32)
-        }
-    }
-}
+// Use standard rand crate for random number generation
+// This replaces the custom LCG implementation with proper PRNG
 impl bevy::prelude::Message for SpawnVisualDamageNumberEvent {}
 impl bevy::prelude::Message for SpawnVisualDeathEffectEvent {}

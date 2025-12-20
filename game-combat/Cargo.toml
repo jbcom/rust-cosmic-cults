@@ -27,6 +27,11 @@ glam = { workspace = true }
 rand = { workspace = true }
 ahash = { workspace = true }
 
+# Proper RNG for WASM compatibility
+bevy_rand = { workspace = true }
+bevy_prng = { workspace = true }
+rand_core = { workspace = true }
+
 # Serialization
 serde = { workspace = true }
 bincode = { workspace = true }
