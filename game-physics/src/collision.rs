@@ -234,16 +234,12 @@ pub struct CollisionEvent {
     pub normal: Vec3,
 }
 
-impl bevy::prelude::Message for CollisionEvent {}
-
 #[derive(Event)]
 pub struct TriggerEvent {
     pub sensor_entity: Entity,
     pub triggered_by: Entity,
     pub entered: bool, // true for enter, false for exit
 }
-
-impl bevy::prelude::Message for TriggerEvent {}
 
 #[derive(Event)]
 pub struct RaycastEvent {
@@ -253,15 +249,11 @@ pub struct RaycastEvent {
     pub max_distance: f32,
 }
 
-impl bevy::prelude::Message for RaycastEvent {}
-
 #[derive(Event)]
 pub struct RaycastResultEvent {
     pub ray_id: u32,
     pub hit: Option<RaycastHit>,
 }
-
-impl bevy::prelude::Message for RaycastResultEvent {}
 
 #[derive(Clone, Debug)]
 pub enum CollisionType {

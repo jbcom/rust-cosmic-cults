@@ -151,13 +151,9 @@ impl UtilityAI {
             }
 
             // Apply compensation factor to prevent too many considerations from zeroing the score
-            // Guard against division by zero when considerations is empty
-            if !action.considerations.is_empty() {
-                let modification_factor = 1.0 - (1.0 / action.considerations.len() as f32);
-                let makeup_value = (1.0 - total_score) * modification_factor;
-                total_score = total_score + (makeup_value * total_score);
-            }
-            // When there are no considerations, total_score remains as base_score
+            let modification_factor = 1.0 - (1.0 / action.considerations.len() as f32);
+            let makeup_value = (1.0 - total_score) * modification_factor;
+            total_score = total_score + (makeup_value * total_score);
 
             scores.push(UtilityScore {
                 action_index: index,
@@ -166,8 +162,8 @@ impl UtilityAI {
             });
         }
 
-        // Sort by score (highest first), treating NaN as lowest value
-        scores.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Less));
+        // Sort by score (highest first)
+        scores.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
         scores
     }
 

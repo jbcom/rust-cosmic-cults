@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cosmic Cults RTS</title>
+    <style>body { margin: 0; overflow: hidden; background-color: black; }</style>
+  </head>
+  <body>
+    <script type="module">
+      import init from "./game_runner.js";
+      init().catch((error) => {
+        if (!error.message.startsWith("Using exceptions for control flow,")) {
+          throw error;
+        }
+      });
+    </script>
+  </body>
+</html>

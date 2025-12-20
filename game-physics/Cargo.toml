@@ -15,7 +15,7 @@ categories.workspace = true
 bevy = { workspace = true, features = ["bevy_asset"] }
 
 # Physics engine
-# # avian3d = { workspace = true }
+avian3d = { workspace = true }
 
 # Math and utilities
 glam = { workspace = true }

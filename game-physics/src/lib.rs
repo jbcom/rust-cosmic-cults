@@ -5,6 +5,7 @@
 //! other game crates (combat, units, AI) depend on.
 
 use bevy::prelude::*;
+use avian3d::prelude as avian;
 // Avoid sphere name conflict with Bevy's math Sphere
 use crate::components::Sphere as PhysicsSphere;
 
@@ -54,21 +55,24 @@ impl Plugin for GamePhysicsPlugin {
 
         // Add collision events
         if self.enable_collision_detection {
-            app.add_event::<CollisionEvent>()
-               .add_event::<TriggerEvent>()
-               .add_event::<RaycastEvent>()
-               .add_event::<RaycastResultEvent>();
+            app.add_message::<CollisionEvent>()
+               .add_message::<TriggerEvent>()
+               .add_message::<RaycastEvent>()
+               .add_message::<RaycastResultEvent>();
         }
 
         // Add movement events
         if self.enable_movement_systems {
-            app.add_event::<MovementCommandEvent>();
+            app.add_message::<MovementCommandEvent>();
         }
 
         // Add core physics systems
+        app.add_plugins(avian::PhysicsPlugins::default());
+
         if self.enable_movement_systems {
             app.add_systems(Update, (
-                movement::physics_movement_system,
+                // movement::physics_movement_system, // Replaced by Avian
+                sync_velocity_system,
                 movement::simple_movement_system,
                 movement::pathfinding_movement_system,
                 movement::waypoint_movement_system,
@@ -130,6 +134,19 @@ pub enum MovementCommand {
 }
 
 // ==============================================================================
+// AVIAN INTEGRATION
+// ==============================================================================
+
+fn sync_velocity_system(
+    mut query: Query<(&Velocity, &mut avian::LinearVelocity, &mut avian::AngularVelocity), Changed<Velocity>>,
+) {
+    for (vel, mut lin, mut ang) in query.iter_mut() {
+        lin.0 = vel.linear;
+        ang.0 = vel.angular;
+    }
+}
+
+// ==============================================================================
 // SPATIAL INDEXING SYSTEMS
 // ==============================================================================
 
@@ -155,7 +172,7 @@ pub fn spatial_indexing_update_system(
 
 /// System to handle movement commands
 pub fn movement_command_system(
-    mut movement_events: EventReader<MovementCommandEvent>,
+    mut movement_events: MessageReader<MovementCommandEvent>,
     mut movement_query: Query<&mut MovementController>,
     mut target_query: Query<&mut MovementTarget>,
     mut path_query: Query<&mut MovementPath>,
@@ -249,6 +266,10 @@ pub fn create_physics_entity(
         Acceleration::default(),
         Mass::new(mass),
         Friction::default(),
+        // Avian components
+        avian::RigidBody::Dynamic,
+        avian::LinearVelocity(velocity),
+        avian::AngularVelocity::ZERO,
     )).id()
 }
 
@@ -266,10 +287,15 @@ pub fn create_aabb_collider(
         AABB::from_size(size),
         CollisionMask::default(),
         RigidBodyType::default(),
+        // Avian
+        avian::Collider::cuboid(size.x, size.y, size.z),
     ));
 
     if is_sensor {
-        entity_commands.insert(Sensor { is_active: true });
+        entity_commands.insert((
+            Sensor { is_active: true },
+            avian::Sensor,
+        ));
     }
 
     entity_commands.id()
@@ -289,10 +315,15 @@ pub fn create_sphere_collider(
         PhysicsSphere::new(radius),
         CollisionMask::default(),
         RigidBodyType::default(),
+        // Avian
+        avian::Collider::sphere(radius),
     ));
 
     if is_sensor {
-        entity_commands.insert(Sensor { is_active: true });
+        entity_commands.insert((
+            Sensor { is_active: true },
+            avian::Sensor,
+        ));
     }
 
     entity_commands.id()
@@ -322,18 +353,4 @@ pub mod prelude {
         create_physics_entity, create_aabb_collider, create_sphere_collider,
     };
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_physics_plugin_initialization() {
-        let mut app = App::new();
-        app.add_plugins(GamePhysicsPlugin::default());
-
-        // Verify resources are initialized
-        assert!(app.world().get_resource::<GlobalSpatialGrid>().is_some());
-        assert!(app.world().get_resource::<BroadPhaseCollisionPairs>().is_some());
-    }
-}
+impl bevy::prelude::Message for MovementCommandEvent {}

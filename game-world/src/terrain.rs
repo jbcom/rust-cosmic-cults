@@ -1,9 +1,9 @@
 //! Production terrain generation and biome system for Cosmic Dominion
 
-use bevy::prelude::*;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::asset::RenderAssetUsages;
 use bevy::mesh::Indices;
+use bevy::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
 use std::collections::HashMap;
@@ -95,7 +95,7 @@ pub fn generate_terrain_system(
     let mut rng = StdRng::seed_from_u64(terrain_config.seed);
 
     // Generate a 3x3 starting area with surrounding terrain
-    let _start_radius = 5; // 11x11 grid centered at origin
+    let start_radius = 5; // 11x11 grid centered at origin
     let fog_radius = 8;   // Additional fog tiles beyond visible area
 
     // Track generated tiles for biome clustering

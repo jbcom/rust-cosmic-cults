@@ -1,9 +1,10 @@
 //! World entity spawning system for Cosmic Dominion
 
-use bevy::prelude::*;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::asset::RenderAssetUsages;
 use bevy::mesh::Indices;
+use tracing::info;
+use bevy::prelude::*;
 use game_assets::{models, Cult};
 use crate::fog::{VisionProvider, Faction};
 
@@ -66,13 +67,13 @@ pub fn spawn_starting_scene(
     spawn_leadership_building(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::ZERO, Cult::Crimson);
 
     // Spawn cult leader on platform (slightly elevated and to the side)
-    spawn_cult_leader(&mut commands, &mut meshes, &mut materials, Vec3::new(5.0, 2.0, 0.0), Cult::Crimson);
+    spawn_cult_leader(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(5.0, 2.0, 0.0), Cult::Crimson);
 
     // Spawn player's starting unit (acolyte)
     spawn_player_unit(&mut commands, &asset_server, Vec3::new(-5.0, 0.0, 0.0), UnitType::Acolyte);
 
     // Spawn initial creature
-    spawn_initial_creature(&mut commands, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, -8.0), CreatureType::CorruptedBeast);
+    spawn_initial_creature(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, -8.0), CreatureType::CorruptedBeast);
 
     // Spawn ritual totem
     spawn_totem(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, 5.0));
@@ -135,6 +136,7 @@ fn spawn_leadership_building(
 /// Spawn the cult leader
 fn spawn_cult_leader(
     commands: &mut Commands,
+    asset_server: &AssetServer,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     position: Vec3,
@@ -219,6 +221,7 @@ fn spawn_player_unit(
 /// Spawn the initial creature
 fn spawn_initial_creature(
     commands: &mut Commands,
+    asset_server: &AssetServer,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     position: Vec3,

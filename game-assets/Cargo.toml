@@ -8,4 +8,4 @@ repository = "https://github.com/jbcom/rust-cosmic-cults"
 
 [dependencies]
 bevy = { workspace = true, features = ["bevy_asset"] }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
