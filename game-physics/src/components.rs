@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // ==============================================================================
 // CORE PHYSICS COMPONENTS
@@ -18,14 +18,14 @@ impl GridPosition {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
-    
+
     pub fn from_world_pos(world_pos: Vec3, grid_size: f32) -> Self {
         Self {
             x: (world_pos.x / grid_size).floor() as i32,
             y: (world_pos.z / grid_size).floor() as i32,
         }
     }
-    
+
     pub fn to_world_pos(&self, grid_size: f32) -> Vec3 {
         Vec3::new(
             self.x as f32 * grid_size + grid_size * 0.5,
@@ -33,7 +33,7 @@ impl GridPosition {
             self.y as f32 * grid_size + grid_size * 0.5,
         )
     }
-    
+
     pub fn distance(&self, other: &GridPosition) -> f32 {
         let dx = (self.x - other.x) as f32;
         let dy = (self.y - other.y) as f32;
@@ -91,7 +91,13 @@ pub struct MovementTarget {
 
 impl MovementTarget {
     pub fn new(x: f32, y: f32, z: f32, speed: f32) -> Self {
-        Self { x, y, z, reached: false, speed }
+        Self {
+            x,
+            y,
+            z,
+            reached: false,
+            speed,
+        }
     }
 }
 
@@ -134,12 +140,15 @@ impl SpatialData {
             has_moved: false,
         }
     }
-    
+
     pub fn update_position(&mut self, new_position: Vec3, grid_size: f32) {
         self.last_position = self.position;
         self.position = new_position;
-        
-        let new_grid_cell = ((new_position.x / grid_size) as i32, (new_position.z / grid_size) as i32);
+
+        let new_grid_cell = (
+            (new_position.x / grid_size) as i32,
+            (new_position.z / grid_size) as i32,
+        );
         self.has_moved = new_grid_cell != self.grid_cell || self.position != self.last_position;
         self.grid_cell = new_grid_cell;
     }
@@ -193,7 +202,7 @@ impl Velocity {
             angular: Vec3::ZERO,
         }
     }
-    
+
     pub fn with_angular(linear: Vec3, angular: Vec3) -> Self {
         Self { linear, angular }
     }
@@ -267,23 +276,26 @@ impl AABB {
             center_offset: Vec3::ZERO,
         }
     }
-    
+
     pub fn from_size(size: Vec3) -> Self {
         Self::new(size * 0.5)
     }
-    
+
     pub fn get_bounds(&self, center: Vec3) -> (Vec3, Vec3) {
         let center = center + self.center_offset;
         (center - self.half_extents, center + self.half_extents)
     }
-    
+
     pub fn overlaps(&self, center_a: Vec3, other: &AABB, center_b: Vec3) -> bool {
         let (min_a, max_a) = self.get_bounds(center_a);
         let (min_b, max_b) = other.get_bounds(center_b);
-        
-        min_a.x <= max_b.x && max_a.x >= min_b.x &&
-        min_a.y <= max_b.y && max_a.y >= min_b.y &&
-        min_a.z <= max_b.z && max_a.z >= min_b.z
+
+        min_a.x <= max_b.x
+            && max_a.x >= min_b.x
+            && min_a.y <= max_b.y
+            && max_a.y >= min_b.y
+            && min_a.z <= max_b.z
+            && max_a.z >= min_b.z
     }
 }
 
@@ -301,7 +313,7 @@ impl Sphere {
             center_offset: Vec3::ZERO,
         }
     }
-    
+
     pub fn overlaps(&self, center_a: Vec3, other: &Sphere, center_b: Vec3) -> bool {
         let center_a = center_a + self.center_offset;
         let center_b = center_b + other.center_offset;

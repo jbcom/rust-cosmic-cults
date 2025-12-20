@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Component, Clone, Debug)]
 pub struct Targetable {
     pub team_id: u32,
-    pub priority: f32,  // Higher priority targets are preferred
+    pub priority: f32, // Higher priority targets are preferred
     pub is_visible: bool,
 }
 
@@ -16,7 +16,7 @@ pub struct Targetable {
 #[derive(Component, Clone, Debug)]
 pub struct TargetingSystem {
     pub range: f32,
-    pub field_of_view: f32,  // In radians
+    pub field_of_view: f32, // In radians
     pub current_target: Option<Entity>,
     pub target_lock_time: f32,
     pub can_target_air: bool,
@@ -27,7 +27,7 @@ impl Default for TargetingSystem {
     fn default() -> Self {
         Self {
             range: 30.0,
-            field_of_view: std::f32::consts::PI,  // 180 degrees
+            field_of_view: std::f32::consts::PI, // 180 degrees
             current_target: None,
             target_lock_time: 0.0,
             can_target_air: true,
@@ -64,30 +64,24 @@ pub struct TargetingPlugin;
 
 impl Plugin for TargetingPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_message::<TargetAcquiredEvent>()
+        app.add_message::<TargetAcquiredEvent>()
             .add_message::<TargetLostEvent>()
-            .add_systems(Update, (
-                target_acquisition_system,
-                target_validation_system,
-                line_of_sight_system,
-            ).chain());
+            .add_systems(
+                Update,
+                (
+                    target_acquisition_system,
+                    target_validation_system,
+                    line_of_sight_system,
+                )
+                    .chain(),
+            );
     }
 }
 
 /// System that handles target acquisition
 pub fn target_acquisition_system(
-    mut targeting_query: Query<(
-        Entity,
-        &mut TargetingSystem,
-        &Transform,
-        &Targetable,
-    )>,
-    targetable_query: Query<(
-        Entity,
-        &Transform,
-        &Targetable,
-    ), Without<TargetingSystem>>,
+    mut targeting_query: Query<(Entity, &mut TargetingSystem, &Transform, &Targetable)>,
+    targetable_query: Query<(Entity, &Transform, &Targetable), Without<TargetingSystem>>,
     // TODO: Add proper Rapier integration when available
     mut target_acquired_events: MessageWriter<TargetAcquiredEvent>,
 ) {
@@ -97,7 +91,7 @@ pub fn target_acquisition_system(
             continue;
         }
 
-        let mut best_target: Option<(Entity, f32, f32)> = None;  // (entity, distance, score)
+        let mut best_target: Option<(Entity, f32, f32)> = None; // (entity, distance, score)
 
         for (target_entity, target_transform, target_team) in targetable_query.iter() {
             // Don't target same team
@@ -151,12 +145,7 @@ pub fn target_acquisition_system(
 
 /// System that validates current targets are still valid
 pub fn target_validation_system(
-    mut targeting_query: Query<(
-        Entity,
-        &mut TargetingSystem,
-        &Transform,
-        &Targetable,
-    )>,
+    mut targeting_query: Query<(Entity, &mut TargetingSystem, &Transform, &Targetable)>,
     targetable_query: Query<(&Transform, &Targetable)>,
     mut target_lost_events: MessageWriter<TargetLostEvent>,
     time: Res<Time>,
@@ -171,7 +160,8 @@ pub fn target_validation_system(
                 let distance = transform.translation.distance(target_transform.translation);
 
                 // Check range
-                if distance > targeting.range * 1.2 {  // Add some buffer to prevent flickering
+                if distance > targeting.range * 1.2 {
+                    // Add some buffer to prevent flickering
                     lose_target = true;
                     reason = TargetLostReason::OutOfRange;
                 }
@@ -214,11 +204,7 @@ pub fn target_validation_system(
 
 /// System that performs detailed line of sight checks
 pub fn line_of_sight_system(
-    targeting_query: Query<(
-        Entity,
-        &TargetingSystem,
-        &Transform,
-    )>,
+    targeting_query: Query<(Entity, &TargetingSystem, &Transform)>,
     transform_query: Query<&Transform>,
 ) {
     for (_entity, targeting, _transform) in targeting_query.iter() {
@@ -232,11 +218,7 @@ pub fn line_of_sight_system(
 }
 
 /// Helper function to check if target is within field of view
-fn is_in_field_of_view(
-    observer: &Transform,
-    target: &Transform,
-    field_of_view: f32,
-) -> bool {
+fn is_in_field_of_view(observer: &Transform, target: &Transform, field_of_view: f32) -> bool {
     let to_target = (target.translation - observer.translation).normalize();
     let forward = observer.rotation * Vec3::Z;
     let angle = forward.angle_between(to_target);
@@ -253,11 +235,7 @@ pub struct HomingProjectile {
 
 /// System for homing projectiles
 pub fn homing_projectile_system(
-    mut projectile_query: Query<(
-        &mut Transform,
-        &mut Velocity,
-        &HomingProjectile,
-    )>,
+    mut projectile_query: Query<(&mut Transform, &mut Velocity, &HomingProjectile)>,
     target_query: Query<&Transform, Without<HomingProjectile>>,
     time: Res<Time>,
 ) {

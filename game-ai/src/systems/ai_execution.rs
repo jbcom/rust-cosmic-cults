@@ -1,7 +1,7 @@
 // AI Execution Systems - handles AI movement, combat, perception and coordination
 use bevy::prelude::*;
-use game_units::{Unit, Team, Leader};
 use game_physics::prelude::*;
+use game_units::{Leader, Team, Unit};
 
 // Events for AI communication
 #[derive(Event, Clone, Debug)]
@@ -75,7 +75,7 @@ pub fn ai_movement_system(
                         },
                     });
                 }
-            },
+            }
             AICommand::Follow(target) => {
                 // Follow logic would go here
                 let target_pos = if let Ok((_, target_transform)) = query.get(*target) {
@@ -90,14 +90,14 @@ pub fn ai_movement_system(
                         controller.is_moving = true;
                     }
                 }
-            },
+            }
             AICommand::Patrol(waypoints) => {
                 if let Ok((mut controller, _)) = query.get_mut(event.entity) {
                     controller.waypoints = waypoints.clone();
                     controller.path_index = 0;
                     controller.is_moving = true;
                 }
-            },
+            }
             _ => {}
         }
     }
@@ -121,7 +121,10 @@ pub fn ai_combat_system(
                         if distance < 10.0 {
                             // In range, perform attack
                             #[cfg(feature = "web")]
-                            web_sys::console::log_1(&format!("AI unit attacking target at distance: {}", distance).into());
+                            web_sys::console::log_1(
+                                &format!("AI unit attacking target at distance: {}", distance)
+                                    .into(),
+                            );
                         }
                     }
                 }
@@ -170,7 +173,10 @@ pub fn perception_system(
 pub fn squad_coordination_system(
     mut commands: Commands,
     leader_query: Query<(Entity, &Transform, &Team), With<Leader>>,
-    mut follower_query: Query<(&mut MovementController, &Transform, &Team), (With<Unit>, Without<Leader>)>,
+    mut follower_query: Query<
+        (&mut MovementController, &Transform, &Team),
+        (With<Unit>, Without<Leader>),
+    >,
     mut movement_events: MessageWriter<MovementCommandEvent>,
 ) {
     for (leader_entity, leader_transform, leader_team) in leader_query.iter() {
@@ -212,5 +218,6 @@ pub fn squad_coordination_system(
             }
         }
     }
-}impl bevy::prelude::Message for AICommandEvent {}
+}
+impl bevy::prelude::Message for AICommandEvent {}
 impl bevy::prelude::Message for AIPerceptionEvent {}

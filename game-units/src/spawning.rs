@@ -1,14 +1,16 @@
-use bevy::prelude::*;
-use bevy::pbr::StandardMaterial;
-use bevy::render::alpha::AlphaMode;
-use crate::{Unit, Leader, Team, Selectable, BaseStats, Experience, VeteranStatus, VeteranTier, VeteranBonus, AuraType};
 use crate::visuals::*;
-use std::collections::HashMap;
-use game_physics::{
-    MovementTarget, MovementPath, MovementController,
-    Velocity, AABB, Mass, SpatialData, CollisionMask,
-    RigidBodyType, RigidBodyVariant, Friction
+use crate::{
+    AuraType, BaseStats, Experience, Leader, Selectable, Team, Unit, VeteranBonus, VeteranStatus,
+    VeteranTier,
 };
+use bevy::pbr::StandardMaterial;
+use bevy::prelude::*;
+use bevy::render::alpha::AlphaMode;
+use game_physics::{
+    AABB, CollisionMask, Friction, Mass, MovementController, MovementPath, MovementTarget,
+    RigidBodyType, RigidBodyVariant, SpatialData, Velocity,
+};
+use std::collections::HashMap;
 #[cfg(feature = "web")]
 use web_sys::console;
 
@@ -44,9 +46,12 @@ impl GameAssets {
     pub fn load(asset_server: &AssetServer, meshes: &mut Assets<Mesh>) -> Self {
         Self {
             // Load actual GLB models from game-assets folder
-            crimson_acolyte: asset_server.load("assets/models/units/crimson/blood_acolyte.glb#Scene0"),
-            crimson_warrior: asset_server.load("assets/models/units/crimson/blood_knight.glb#Scene0"),
-            crimson_berserker: asset_server.load("assets/models/units/crimson/crimson_berserker.glb#Scene0"),
+            crimson_acolyte: asset_server
+                .load("assets/models/units/crimson/blood_acolyte.glb#Scene0"),
+            crimson_warrior: asset_server
+                .load("assets/models/units/crimson/blood_knight.glb#Scene0"),
+            crimson_berserker: asset_server
+                .load("assets/models/units/crimson/crimson_berserker.glb#Scene0"),
             deep_cultist: asset_server.load("assets/models/units/deep/coastal_cultist.glb#Scene0"),
             deep_guardian: asset_server.load("assets/models/units/deep/tide_warrior.glb#Scene0"),
             deep_horror: asset_server.load("assets/models/units/deep/abyssal_horror.glb#Scene0"),
@@ -62,7 +67,11 @@ impl GameAssets {
             // Create procedural meshes for UI elements
             selection_mesh: meshes.add(Torus::new(0.15, 1.5)),
             health_bar_mesh: meshes.add(Cuboid::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, 0.05)),
-            health_fill_mesh: meshes.add(Cuboid::new(HEALTH_BAR_WIDTH * 0.95, HEALTH_BAR_HEIGHT * 0.8, 0.04)),
+            health_fill_mesh: meshes.add(Cuboid::new(
+                HEALTH_BAR_WIDTH * 0.95,
+                HEALTH_BAR_HEIGHT * 0.8,
+                0.04,
+            )),
             aura_mesh: meshes.add(Sphere::new(1.0)),
             platform_mesh: meshes.add(Cylinder::new(2.0, 0.3)),
             veteran_star_mesh: meshes.add(Sphere::new(0.3)),
@@ -124,142 +133,146 @@ pub fn spawn_unit(
     let model_handle = assets.get_unit_model(unit_type, cult);
 
     // Split spawn into multiple insert calls to avoid tuple size limit
-    let entity = commands.spawn((
-        // === VISUAL COMPONENTS ===
-        SceneRoot(model_handle),
-        Transform::from_translation(position),
-        GlobalTransform::default(),
-        Visibility::default(),
-        ViewVisibility::default(),
-        InheritedVisibility::default(),
-
-        // === CORE GAME COMPONENTS ===
-        Unit {
-            unit_type: unit_type.to_string(),
-            cult: cult.to_string(),
-            health: 100.0,
-            max_health: 100.0,
-            experience: 0,
-            veteran_tier: 0,
-            attack_damage: 10.0,
-            movement_speed: 5.0,
-            attack_speed: 1.0,
-        },
-        Team {
-            id: team_id,
-            cult: cult.to_string(),
-            color: cult_color,
-        },
-        Selectable {
-            selection_priority: 1,
-            selection_radius: 1.5,
-        },
-    ))
-    .insert((
-        // === PHYSICS COMPONENTS ===
-        MovementController {
-            target_position: None,
-            velocity: Vec3::ZERO,
-            max_speed: 5.0,
-            acceleration: 10.0,
-            rotation_speed: 5.0,
-            path_index: 0,
-            waypoints: Vec::new(),
-            is_moving: false,
-            movement_type: game_physics::MovementType::Ground,
-        },
-        Velocity::default(),
-        AABB::from_size(Vec3::new(1.0, 2.0, 1.0)), // Unit collision box
-        Mass::new(1.0), // Standard unit mass
-        Friction::default(),
-        RigidBodyType {
-            body_type: RigidBodyVariant::Dynamic,
-        },
-        CollisionMask {
-            layer: 1, // Unit layer
-            mask: u32::MAX, // Collide with everything
-        },
-        SpatialData::new(position), // For spatial indexing
-    ))
-    .insert((
-        // === MOVEMENT & STATS COMPONENTS ===
-        MovementTarget::new(position.x, position.z, position.z, 5.0),
-        MovementPath {
-            waypoints: Vec::new(),
-            current_waypoint_index: 0,
-            movement_speed: 5.0,
-            is_moving: false,
-        },
-        BaseStats {
-            base_attack_damage: 10.0,
-            base_health: 100.0,
-            base_speed: 5.0,
-            base_attack_speed: 1.0,
-            initialized: true,
-        },
-        Experience::default(),
-        VeteranStatus {
-            tier: VeteranTier::Recruit,
-            promotion_ready: false,
-            visual_scale: 1.0,
-            bonuses: VeteranBonus::default(),
-        },
-    ))
-    .with_children(|parent| {
-        // === SELECTION INDICATOR (initially hidden) ===
-        parent.spawn((
-            Name::new("SelectionIndicator"),
-            Mesh3d(assets.selection_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: cult_color.with_alpha(0.4),
-                alpha_mode: AlphaMode::Blend,
-                emissive: color_to_emissive(cult_color) * 0.5,
-                double_sided: true,
-                cull_mode: None,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0)),
-            SelectionIndicator,
-            Visibility::Hidden,
-        ));
-
-        // === HEALTH BAR ===
-        parent.spawn((
-            Name::new("HealthBar"),
-            Mesh3d(assets.health_bar_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
-                unlit: true,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET, 0.0)),
+    let entity = commands
+        .spawn((
+            // === VISUAL COMPONENTS ===
+            SceneRoot(model_handle),
+            Transform::from_translation(position),
+            GlobalTransform::default(),
+            Visibility::default(),
+            ViewVisibility::default(),
+            InheritedVisibility::default(),
+            // === CORE GAME COMPONENTS ===
+            Unit {
+                unit_type: unit_type.to_string(),
+                cult: cult.to_string(),
+                health: 100.0,
+                max_health: 100.0,
+                experience: 0,
+                veteran_tier: 0,
+                attack_damage: 10.0,
+                movement_speed: 5.0,
+                attack_speed: 1.0,
+            },
+            Team {
+                id: team_id,
+                cult: cult.to_string(),
+                color: cult_color,
+            },
+            Selectable {
+                selection_priority: 1,
+                selection_radius: 1.5,
+            },
         ))
-        .with_children(|health_parent| {
-            // Health fill bar
-            health_parent.spawn((
-                Name::new("HealthFill"),
-                Mesh3d(assets.health_fill_mesh.clone()),
+        .insert((
+            // === PHYSICS COMPONENTS ===
+            MovementController {
+                target_position: None,
+                velocity: Vec3::ZERO,
+                max_speed: 5.0,
+                acceleration: 10.0,
+                rotation_speed: 5.0,
+                path_index: 0,
+                waypoints: Vec::new(),
+                is_moving: false,
+                movement_type: game_physics::MovementType::Ground,
+            },
+            Velocity::default(),
+            AABB::from_size(Vec3::new(1.0, 2.0, 1.0)), // Unit collision box
+            Mass::new(1.0),                            // Standard unit mass
+            Friction::default(),
+            RigidBodyType {
+                body_type: RigidBodyVariant::Dynamic,
+            },
+            CollisionMask {
+                layer: 1,       // Unit layer
+                mask: u32::MAX, // Collide with everything
+            },
+            SpatialData::new(position), // For spatial indexing
+        ))
+        .insert((
+            // === MOVEMENT & STATS COMPONENTS ===
+            MovementTarget::new(position.x, position.z, position.z, 5.0),
+            MovementPath {
+                waypoints: Vec::new(),
+                current_waypoint_index: 0,
+                movement_speed: 5.0,
+                is_moving: false,
+            },
+            BaseStats {
+                base_attack_damage: 10.0,
+                base_health: 100.0,
+                base_speed: 5.0,
+                base_attack_speed: 1.0,
+                initialized: true,
+            },
+            Experience::default(),
+            VeteranStatus {
+                tier: VeteranTier::Recruit,
+                promotion_ready: false,
+                visual_scale: 1.0,
+                bonuses: VeteranBonus::default(),
+            },
+        ))
+        .with_children(|parent| {
+            // === SELECTION INDICATOR (initially hidden) ===
+            parent.spawn((
+                Name::new("SelectionIndicator"),
+                Mesh3d(assets.selection_mesh.clone()),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
-                    emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
-                    unlit: true,
+                    base_color: cult_color.with_alpha(0.4),
+                    alpha_mode: AlphaMode::Blend,
+                    emissive: color_to_emissive(cult_color) * 0.5,
+                    double_sided: true,
+                    cull_mode: None,
                     ..default()
                 })),
-                Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
-                HealthBar {
-                    max_width: HEALTH_BAR_WIDTH * 0.95,
-                },
-                HealthBarFill,
+                Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0)),
+                SelectionIndicator,
+                Visibility::Hidden,
             ));
-        });
-    })
-    .id();
+
+            // === HEALTH BAR ===
+            parent
+                .spawn((
+                    Name::new("HealthBar"),
+                    Mesh3d(assets.health_bar_mesh.clone()),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
+                        unlit: true,
+                        ..default()
+                    })),
+                    Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET, 0.0)),
+                ))
+                .with_children(|health_parent| {
+                    // Health fill bar
+                    health_parent.spawn((
+                        Name::new("HealthFill"),
+                        Mesh3d(assets.health_fill_mesh.clone()),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
+                            emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
+                            unlit: true,
+                            ..default()
+                        })),
+                        Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
+                        HealthBar {
+                            max_width: HEALTH_BAR_WIDTH * 0.95,
+                        },
+                        HealthBarFill,
+                    ));
+                });
+        })
+        .id();
 
     #[cfg(feature = "web")]
-    console::log_1(&format!(
-        "Spawned {} unit (visual) for {} at ({:.2}, {:.2}, {:.2})",
-        unit_type, cult, position.x, position.y, position.z
-    ).into());
+    console::log_1(
+        &format!(
+            "Spawned {} unit (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            unit_type, cult, position.x, position.y, position.z
+        )
+        .into(),
+    );
 
     entity
 }
@@ -280,189 +293,192 @@ pub fn spawn_leader(
     let aura_color = get_aura_color(&aura_type);
     let aura_emissive = get_aura_emissive(&aura_type);
 
-    let entity = commands.spawn((
-        // === VISUAL COMPONENTS ===
-        SceneRoot(leader_model),
-        Transform::from_translation(position)
-            .with_scale(Vec3::splat(1.2)), // Leaders are bigger
-        GlobalTransform::default(),
-        Visibility::default(),
-        ViewVisibility::default(),
-        InheritedVisibility::default(),
-
-        // === GAME COMPONENTS ===
-        Leader {
-            name: name.to_string(),
-            cult: cult.to_string(),
-            health: 200.0,
-            max_health: 200.0,
-            shield: 50.0,
-            aura_radius: 15.0,
-            aura_type: aura_type.clone(),
-            platform_entity: None,
-            defeat_on_death: true,
-            alive: true,
-            last_ability1_use: 0.0,
-            last_ability2_use: 0.0,
-        },
-        Unit {
-            unit_type: "leader".to_string(),
-            cult: cult.to_string(),
-            health: 200.0,
-            max_health: 200.0,
-            experience: 0,
-            veteran_tier: 3,
-            attack_damage: 25.0,
-            movement_speed: 6.0,
-            attack_speed: 1.5,
-        },
-        Team {
-            id: team_id,
-            cult: cult.to_string(),
-            color: cult_color,
-        },
-        Selectable {
-            selection_priority: 10,
-            selection_radius: 2.0,
-        },
-        MovementTarget::new(position.x, position.z, position.z, 6.0),
-        MovementPath {
-            waypoints: Vec::new(),
-            current_waypoint_index: 0,
-            movement_speed: 6.0,
-            is_moving: false,
-        },
-        BaseStats {
-            base_attack_damage: 25.0,
-            base_health: 200.0,
-            base_speed: 6.0,
-            base_attack_speed: 1.5,
-            initialized: true,
-        },
-        Experience {
-            current: 0,
-            total_earned: 1000,
-            level: 5,
-            kills: 0,
-            buildings_destroyed: 0,
-        },
-        VeteranStatus {
-            tier: VeteranTier::Veteran,
-            promotion_ready: false,
-            visual_scale: 1.2,
-            bonuses: VeteranBonus {
-                health_multiplier: 1.5,
-                damage_multiplier: 1.3,
-                speed_multiplier: 1.2,
-                xp_multiplier: 1.0,
+    let entity = commands
+        .spawn((
+            // === VISUAL COMPONENTS ===
+            SceneRoot(leader_model),
+            Transform::from_translation(position).with_scale(Vec3::splat(1.2)), // Leaders are bigger
+            GlobalTransform::default(),
+            Visibility::default(),
+            ViewVisibility::default(),
+            InheritedVisibility::default(),
+            // === GAME COMPONENTS ===
+            Leader {
+                name: name.to_string(),
+                cult: cult.to_string(),
+                health: 200.0,
+                max_health: 200.0,
+                shield: 50.0,
+                aura_radius: 15.0,
+                aura_type: aura_type.clone(),
+                platform_entity: None,
+                defeat_on_death: true,
+                alive: true,
+                last_ability1_use: 0.0,
+                last_ability2_use: 0.0,
             },
-        },
-    ))
-    .with_children(|parent| {
-        // === AURA VISUAL EFFECT ===
-        parent.spawn((
-            Name::new("AuraVisual"),
-            Mesh3d(assets.aura_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: aura_color,
-                alpha_mode: AlphaMode::Blend,
-                emissive: aura_emissive,
-                double_sided: true,
-                cull_mode: None,
-                ..default()
-            })),
-            Transform::from_scale(Vec3::splat(15.0)), // Aura radius
-            AuraVisual {
-                aura_type,
-                base_radius: 15.0,
+            Unit {
+                unit_type: "leader".to_string(),
+                cult: cult.to_string(),
+                health: 200.0,
+                max_health: 200.0,
+                experience: 0,
+                veteran_tier: 3,
+                attack_damage: 25.0,
+                movement_speed: 6.0,
+                attack_speed: 1.5,
             },
-        ));
-
-        // === LEADER PLATFORM ===
-        parent.spawn((
-            Name::new("LeaderPlatform"),
-            Mesh3d(assets.platform_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: cult_color,
-                metallic: 0.8,
-                perceptual_roughness: 0.3,
-                emissive: color_to_emissive(cult_color) * 0.3,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, -0.5, 0.0)),
-            LeaderPlatform,
-        ));
-
-        // === SELECTION INDICATOR ===
-        parent.spawn((
-            Name::new("SelectionIndicator"),
-            Mesh3d(assets.selection_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(1.0, 0.85, 0.0, 0.6), // Gold for leaders
-                alpha_mode: AlphaMode::Blend,
-                emissive: LinearRgba::rgb(1.0, 0.85, 0.0),
-                double_sided: true,
-                cull_mode: None,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0))
-                .with_scale(Vec3::splat(1.3)),
-            SelectionIndicator,
-            Visibility::Hidden,
-        ));
-
-        // === HEALTH BAR (bigger for leaders) ===
-        parent.spawn((
-            Name::new("HealthBar"),
-            Mesh3d(assets.health_bar_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
-                unlit: true,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET + 1.0, 0.0))
-                .with_scale(Vec3::new(1.5, 1.5, 1.0)),
+            Team {
+                id: team_id,
+                cult: cult.to_string(),
+                color: cult_color,
+            },
+            Selectable {
+                selection_priority: 10,
+                selection_radius: 2.0,
+            },
+            MovementTarget::new(position.x, position.z, position.z, 6.0),
+            MovementPath {
+                waypoints: Vec::new(),
+                current_waypoint_index: 0,
+                movement_speed: 6.0,
+                is_moving: false,
+            },
+            BaseStats {
+                base_attack_damage: 25.0,
+                base_health: 200.0,
+                base_speed: 6.0,
+                base_attack_speed: 1.5,
+                initialized: true,
+            },
+            Experience {
+                current: 0,
+                total_earned: 1000,
+                level: 5,
+                kills: 0,
+                buildings_destroyed: 0,
+            },
+            VeteranStatus {
+                tier: VeteranTier::Veteran,
+                promotion_ready: false,
+                visual_scale: 1.2,
+                bonuses: VeteranBonus {
+                    health_multiplier: 1.5,
+                    damage_multiplier: 1.3,
+                    speed_multiplier: 1.2,
+                    xp_multiplier: 1.0,
+                },
+            },
         ))
-        .with_children(|health_parent| {
-            health_parent.spawn((
-                Name::new("HealthFill"),
-                Mesh3d(assets.health_fill_mesh.clone()),
+        .with_children(|parent| {
+            // === AURA VISUAL EFFECT ===
+            parent.spawn((
+                Name::new("AuraVisual"),
+                Mesh3d(assets.aura_mesh.clone()),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgba(0.8, 0.6, 0.0, 0.9), // Gold health for leaders
-                    emissive: LinearRgba::rgb(0.5, 0.4, 0.0),
-                    unlit: true,
+                    base_color: aura_color,
+                    alpha_mode: AlphaMode::Blend,
+                    emissive: aura_emissive,
+                    double_sided: true,
+                    cull_mode: None,
                     ..default()
                 })),
-                Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
-                HealthBar {
-                    max_width: HEALTH_BAR_WIDTH * 0.95 * 1.5,
+                Transform::from_scale(Vec3::splat(15.0)), // Aura radius
+                AuraVisual {
+                    aura_type,
+                    base_radius: 15.0,
                 },
-                HealthBarFill,
             ));
-        });
 
-        // === VETERAN STAR (leaders always have one) ===
-        parent.spawn((
-            Name::new("VeteranIndicator"),
-            Mesh3d(assets.veteran_star_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(1.0, 0.85, 0.0),
-                emissive: LinearRgba::rgb(2.0, 1.7, 0.0),
-                metallic: 0.9,
-                perceptual_roughness: 0.1,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, 3.5, 0.0)),
-            VeteranIndicator,
-        ));
-    })
-    .id();
+            // === LEADER PLATFORM ===
+            parent.spawn((
+                Name::new("LeaderPlatform"),
+                Mesh3d(assets.platform_mesh.clone()),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: cult_color,
+                    metallic: 0.8,
+                    perceptual_roughness: 0.3,
+                    emissive: color_to_emissive(cult_color) * 0.3,
+                    ..default()
+                })),
+                Transform::from_translation(Vec3::new(0.0, -0.5, 0.0)),
+                LeaderPlatform,
+            ));
+
+            // === SELECTION INDICATOR ===
+            parent.spawn((
+                Name::new("SelectionIndicator"),
+                Mesh3d(assets.selection_mesh.clone()),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgba(1.0, 0.85, 0.0, 0.6), // Gold for leaders
+                    alpha_mode: AlphaMode::Blend,
+                    emissive: LinearRgba::rgb(1.0, 0.85, 0.0),
+                    double_sided: true,
+                    cull_mode: None,
+                    ..default()
+                })),
+                Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0))
+                    .with_scale(Vec3::splat(1.3)),
+                SelectionIndicator,
+                Visibility::Hidden,
+            ));
+
+            // === HEALTH BAR (bigger for leaders) ===
+            parent
+                .spawn((
+                    Name::new("HealthBar"),
+                    Mesh3d(assets.health_bar_mesh.clone()),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
+                        unlit: true,
+                        ..default()
+                    })),
+                    Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET + 1.0, 0.0))
+                        .with_scale(Vec3::new(1.5, 1.5, 1.0)),
+                ))
+                .with_children(|health_parent| {
+                    health_parent.spawn((
+                        Name::new("HealthFill"),
+                        Mesh3d(assets.health_fill_mesh.clone()),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color: Color::srgba(0.8, 0.6, 0.0, 0.9), // Gold health for leaders
+                            emissive: LinearRgba::rgb(0.5, 0.4, 0.0),
+                            unlit: true,
+                            ..default()
+                        })),
+                        Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
+                        HealthBar {
+                            max_width: HEALTH_BAR_WIDTH * 0.95 * 1.5,
+                        },
+                        HealthBarFill,
+                    ));
+                });
+
+            // === VETERAN STAR (leaders always have one) ===
+            parent.spawn((
+                Name::new("VeteranIndicator"),
+                Mesh3d(assets.veteran_star_mesh.clone()),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(1.0, 0.85, 0.0),
+                    emissive: LinearRgba::rgb(2.0, 1.7, 0.0),
+                    metallic: 0.9,
+                    perceptual_roughness: 0.1,
+                    ..default()
+                })),
+                Transform::from_translation(Vec3::new(0.0, 3.5, 0.0)),
+                VeteranIndicator,
+            ));
+        })
+        .id();
 
     #[cfg(feature = "web")]
-    console::log_1(&format!(
-        "Spawned leader {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
-        name, cult, position.x, position.y, position.z
-    ).into());
+    console::log_1(
+        &format!(
+            "Spawned leader {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            name, cult, position.x, position.y, position.z
+        )
+        .into(),
+    );
 
     entity
 }
@@ -491,15 +507,26 @@ pub fn spawn_squad(
 
         let spawn_position = center_position + Vec3::new(offset_x, 0.0, offset_z);
 
-        let entity = spawn_unit(commands, unit_type, spawn_position, cult, team_id, assets, materials);
+        let entity = spawn_unit(
+            commands,
+            unit_type,
+            spawn_position,
+            cult,
+            team_id,
+            assets,
+            materials,
+        );
         entities.push(entity);
     }
 
     #[cfg(feature = "web")]
-    console::log_1(&format!(
-        "Spawned squad of {} {} units (visual) for {}",
-        count, unit_type, cult
-    ).into());
+    console::log_1(
+        &format!(
+            "Spawned squad of {} {} units (visual) for {}",
+            count, unit_type, cult
+        )
+        .into(),
+    );
 
     entities
 }
@@ -586,73 +613,91 @@ impl Default for UnitTemplates {
         let mut templates = HashMap::new();
 
         // Crimson Covenant units
-        templates.insert("crimson_cultist".to_string(), UnitTemplate {
-            unit_type: "crimson_cultist".to_string(),
-            model_name: "blood_acolyte".to_string(),
-            base_health: 80.0,
-            base_attack: 12.0,
-            base_speed: 5.5,
-            attack_speed: 1.2,
-            cost: HashMap::from([("energy".to_string(), 50)]),
-            build_time: 30.0,
-        });
+        templates.insert(
+            "crimson_cultist".to_string(),
+            UnitTemplate {
+                unit_type: "crimson_cultist".to_string(),
+                model_name: "blood_acolyte".to_string(),
+                base_health: 80.0,
+                base_attack: 12.0,
+                base_speed: 5.5,
+                attack_speed: 1.2,
+                cost: HashMap::from([("energy".to_string(), 50)]),
+                build_time: 30.0,
+            },
+        );
 
-        templates.insert("crimson_warrior".to_string(), UnitTemplate {
-            unit_type: "crimson_warrior".to_string(),
-            model_name: "blood_knight".to_string(),
-            base_health: 150.0,
-            base_attack: 20.0,
-            base_speed: 4.0,
-            attack_speed: 0.8,
-            cost: HashMap::from([("energy".to_string(), 100), ("materials".to_string(), 25)]),
-            build_time: 60.0,
-        });
+        templates.insert(
+            "crimson_warrior".to_string(),
+            UnitTemplate {
+                unit_type: "crimson_warrior".to_string(),
+                model_name: "blood_knight".to_string(),
+                base_health: 150.0,
+                base_attack: 20.0,
+                base_speed: 4.0,
+                attack_speed: 0.8,
+                cost: HashMap::from([("energy".to_string(), 100), ("materials".to_string(), 25)]),
+                build_time: 60.0,
+            },
+        );
 
         // Deep Ones units
-        templates.insert("deep_acolyte".to_string(), UnitTemplate {
-            unit_type: "deep_acolyte".to_string(),
-            model_name: "coastal_cultist".to_string(),
-            base_health: 120.0,
-            base_attack: 8.0,
-            base_speed: 4.5,
-            attack_speed: 1.0,
-            cost: HashMap::from([("energy".to_string(), 60)]),
-            build_time: 35.0,
-        });
+        templates.insert(
+            "deep_acolyte".to_string(),
+            UnitTemplate {
+                unit_type: "deep_acolyte".to_string(),
+                model_name: "coastal_cultist".to_string(),
+                base_health: 120.0,
+                base_attack: 8.0,
+                base_speed: 4.5,
+                attack_speed: 1.0,
+                cost: HashMap::from([("energy".to_string(), 60)]),
+                build_time: 35.0,
+            },
+        );
 
-        templates.insert("deep_guardian".to_string(), UnitTemplate {
-            unit_type: "deep_guardian".to_string(),
-            model_name: "tide_warrior".to_string(),
-            base_health: 200.0,
-            base_attack: 15.0,
-            base_speed: 3.5,
-            attack_speed: 0.6,
-            cost: HashMap::from([("energy".to_string(), 120), ("materials".to_string(), 30)]),
-            build_time: 75.0,
-        });
+        templates.insert(
+            "deep_guardian".to_string(),
+            UnitTemplate {
+                unit_type: "deep_guardian".to_string(),
+                model_name: "tide_warrior".to_string(),
+                base_health: 200.0,
+                base_attack: 15.0,
+                base_speed: 3.5,
+                attack_speed: 0.6,
+                cost: HashMap::from([("energy".to_string(), 120), ("materials".to_string(), 30)]),
+                build_time: 75.0,
+            },
+        );
 
         // Void Seekers units
-        templates.insert("void_scout".to_string(), UnitTemplate {
-            unit_type: "void_scout".to_string(),
-            model_name: "void_initiate".to_string(),
-            base_health: 60.0,
-            base_attack: 10.0,
-            base_speed: 7.0,
-            attack_speed: 1.5,
-            cost: HashMap::from([("energy".to_string(), 40)]),
-            build_time: 25.0,
-        });
+        templates.insert(
+            "void_scout".to_string(),
+            UnitTemplate {
+                unit_type: "void_scout".to_string(),
+                model_name: "void_initiate".to_string(),
+                base_health: 60.0,
+                base_attack: 10.0,
+                base_speed: 7.0,
+                attack_speed: 1.5,
+                cost: HashMap::from([("energy".to_string(), 40)]),
+                build_time: 25.0,
+            },
+        );
 
-        templates.insert("void_assassin".to_string(), UnitTemplate {
-            unit_type: "void_assassin".to_string(),
-            model_name: "shadow_blade".to_string(),
-            base_health: 90.0,
-            base_attack: 25.0,
-            base_speed: 6.5,
-            attack_speed: 2.0,
-            cost: HashMap::from([("energy".to_string(), 80), ("materials".to_string(), 20)]),
-            build_time: 45.0,
-        });
+        templates.insert(
+            "void_assassin".to_string(),
+            UnitTemplate {
+                unit_type: "void_assassin".to_string(),
+                model_name: "shadow_blade".to_string(),
+                base_health: 90.0,
+                base_attack: 25.0,
+                base_speed: 6.5,
+                attack_speed: 2.0,
+                cost: HashMap::from([("energy".to_string(), 80), ("materials".to_string(), 20)]),
+                build_time: 45.0,
+            },
+        );
 
         Self { templates }
     }
@@ -671,113 +716,117 @@ pub fn spawn_unit_from_template(
     let cult_color = get_cult_color(cult);
     let model_handle = assets.get_unit_model(&template.model_name, cult);
 
-    let entity = commands.spawn((
-        // === VISUAL COMPONENTS ===
-        SceneRoot(model_handle),
-        Transform::from_translation(position),
-        GlobalTransform::default(),
-        Visibility::default(),
-        ViewVisibility::default(),
-        InheritedVisibility::default(),
-
-        // === GAME COMPONENTS ===
-        Unit {
-            unit_type: template.unit_type.clone(),
-            cult: cult.to_string(),
-            health: template.base_health,
-            max_health: template.base_health,
-            experience: 0,
-            veteran_tier: 0,
-            attack_damage: template.base_attack,
-            movement_speed: template.base_speed,
-            attack_speed: template.attack_speed,
-        },
-        Team {
-            id: team_id,
-            cult: cult.to_string(),
-            color: cult_color,
-        },
-        Selectable {
-            selection_priority: 1,
-            selection_radius: 1.5,
-        },
-        MovementTarget::new(position.x, position.z, position.z, template.base_speed),
-        MovementPath {
-            waypoints: Vec::new(),
-            current_waypoint_index: 0,
-            movement_speed: template.base_speed,
-            is_moving: false,
-        },
-        BaseStats {
-            base_attack_damage: template.base_attack,
-            base_health: template.base_health,
-            base_speed: template.base_speed,
-            base_attack_speed: template.attack_speed,
-            initialized: true,
-        },
-        Experience::default(),
-        VeteranStatus {
-            tier: VeteranTier::Recruit,
-            promotion_ready: false,
-            visual_scale: 1.0,
-            bonuses: VeteranBonus::default(),
-        },
-    ))
-    .with_children(|parent| {
-        // Add visual children (health bar, selection indicator, etc.)
-        // === SELECTION INDICATOR ===
-        parent.spawn((
-            Name::new("SelectionIndicator"),
-            Mesh3d(assets.selection_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: cult_color.with_alpha(0.4),
-                alpha_mode: AlphaMode::Blend,
-                emissive: color_to_emissive(cult_color) * 0.5,
-                double_sided: true,
-                cull_mode: None,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0)),
-            SelectionIndicator,
-            Visibility::Hidden,
-        ));
-
-        // === HEALTH BAR ===
-        parent.spawn((
-            Name::new("HealthBar"),
-            Mesh3d(assets.health_bar_mesh.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
-                unlit: true,
-                ..default()
-            })),
-            Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET, 0.0)),
+    let entity = commands
+        .spawn((
+            // === VISUAL COMPONENTS ===
+            SceneRoot(model_handle),
+            Transform::from_translation(position),
+            GlobalTransform::default(),
+            Visibility::default(),
+            ViewVisibility::default(),
+            InheritedVisibility::default(),
+            // === GAME COMPONENTS ===
+            Unit {
+                unit_type: template.unit_type.clone(),
+                cult: cult.to_string(),
+                health: template.base_health,
+                max_health: template.base_health,
+                experience: 0,
+                veteran_tier: 0,
+                attack_damage: template.base_attack,
+                movement_speed: template.base_speed,
+                attack_speed: template.attack_speed,
+            },
+            Team {
+                id: team_id,
+                cult: cult.to_string(),
+                color: cult_color,
+            },
+            Selectable {
+                selection_priority: 1,
+                selection_radius: 1.5,
+            },
+            MovementTarget::new(position.x, position.z, position.z, template.base_speed),
+            MovementPath {
+                waypoints: Vec::new(),
+                current_waypoint_index: 0,
+                movement_speed: template.base_speed,
+                is_moving: false,
+            },
+            BaseStats {
+                base_attack_damage: template.base_attack,
+                base_health: template.base_health,
+                base_speed: template.base_speed,
+                base_attack_speed: template.attack_speed,
+                initialized: true,
+            },
+            Experience::default(),
+            VeteranStatus {
+                tier: VeteranTier::Recruit,
+                promotion_ready: false,
+                visual_scale: 1.0,
+                bonuses: VeteranBonus::default(),
+            },
         ))
-        .with_children(|health_parent| {
-            health_parent.spawn((
-                Name::new("HealthFill"),
-                Mesh3d(assets.health_fill_mesh.clone()),
+        .with_children(|parent| {
+            // Add visual children (health bar, selection indicator, etc.)
+            // === SELECTION INDICATOR ===
+            parent.spawn((
+                Name::new("SelectionIndicator"),
+                Mesh3d(assets.selection_mesh.clone()),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
-                    emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
-                    unlit: true,
+                    base_color: cult_color.with_alpha(0.4),
+                    alpha_mode: AlphaMode::Blend,
+                    emissive: color_to_emissive(cult_color) * 0.5,
+                    double_sided: true,
+                    cull_mode: None,
                     ..default()
                 })),
-                Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
-                HealthBar {
-                    max_width: HEALTH_BAR_WIDTH * 0.95,
-                },
-                HealthBarFill,
+                Transform::from_translation(Vec3::new(0.0, SELECTION_INDICATOR_Y_OFFSET, 0.0)),
+                SelectionIndicator,
+                Visibility::Hidden,
             ));
-        });
-    })
-    .id();
+
+            // === HEALTH BAR ===
+            parent
+                .spawn((
+                    Name::new("HealthBar"),
+                    Mesh3d(assets.health_bar_mesh.clone()),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
+                        unlit: true,
+                        ..default()
+                    })),
+                    Transform::from_translation(Vec3::new(0.0, HEALTH_BAR_Y_OFFSET, 0.0)),
+                ))
+                .with_children(|health_parent| {
+                    health_parent.spawn((
+                        Name::new("HealthFill"),
+                        Mesh3d(assets.health_fill_mesh.clone()),
+                        MeshMaterial3d(materials.add(StandardMaterial {
+                            base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
+                            emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
+                            unlit: true,
+                            ..default()
+                        })),
+                        Transform::from_translation(Vec3::new(0.0, 0.0, 0.01)),
+                        HealthBar {
+                            max_width: HEALTH_BAR_WIDTH * 0.95,
+                        },
+                        HealthBarFill,
+                    ));
+                });
+        })
+        .id();
 
     #[cfg(feature = "web")]
-    console::log_1(&format!(
-        "Spawned {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
-        template.unit_type, cult, position.x, position.y, position.z
-    ).into());
+    console::log_1(
+        &format!(
+            "Spawned {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            template.unit_type, cult, position.x, position.y, position.z
+        )
+        .into(),
+    );
 
     entity
 }

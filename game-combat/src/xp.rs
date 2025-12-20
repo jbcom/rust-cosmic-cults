@@ -6,14 +6,12 @@ pub struct XPPlugin;
 
 impl Plugin for XPPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_message::<XPGainEvent>()
+        app.add_message::<XPGainEvent>()
             .add_message::<LevelUpEvent>()
-            .add_systems(Update, (
-                process_xp_events,
-                check_level_ups,
-                apply_level_bonuses,
-            ).chain());
+            .add_systems(
+                Update,
+                (process_xp_events, check_level_ups, apply_level_bonuses).chain(),
+            );
     }
 }
 
@@ -132,24 +130,26 @@ pub fn process_xp_events(
     }
 }
 
-pub fn check_level_ups(
-    mut level_up_events: MessageReader<LevelUpEvent>,
-) {
+pub fn check_level_ups(mut level_up_events: MessageReader<LevelUpEvent>) {
     for event in level_up_events.read() {
         // Log level ups
         #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!(
+        web_sys::console::log_1(
+            &format!(
+                "Entity {:?} leveled up to level {}!",
+                event.entity, event.new_level
+            )
+            .into(),
+        );
+        #[cfg(not(target_arch = "wasm32"))]
+        println!(
             "Entity {:?} leveled up to level {}!",
             event.entity, event.new_level
-        ).into());
-        #[cfg(not(target_arch = "wasm32"))]
-        println!("Entity {:?} leveled up to level {}!", event.entity, event.new_level);
+        );
     }
 }
 
-pub fn apply_level_bonuses(
-    query: Query<(&Experience, &crate::components::CombatStats)>,
-) {
+pub fn apply_level_bonuses(query: Query<(&Experience, &crate::components::CombatStats)>) {
     for (experience, _stats) in query.iter() {
         // Apply level-based stat increases
         let _level_bonus = 1.0 + (experience.level as f32 - 1.0) * 0.05;

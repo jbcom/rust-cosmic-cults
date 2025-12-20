@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::*;
 use crate::spatial::GlobalSpatialGrid;
+use bevy::prelude::*;
 // Use our physics Sphere to avoid name conflict
 use crate::components::Sphere as PhysicsSphere;
 
@@ -15,17 +15,17 @@ pub fn broad_phase_collision_system(
     mut collision_pairs: ResMut<BroadPhaseCollisionPairs>,
 ) {
     collision_pairs.clear();
-    
+
     // Update spatial grid with current positions
     spatial_grid.grid.clear();
     for (entity, transform) in query.iter() {
         spatial_grid.grid.insert(entity, transform.translation);
     }
-    
+
     // Find potential collision pairs using spatial grid
     for (entity, transform) in query.iter() {
         let nearby_entities = spatial_grid.grid.query_range(transform.translation, 5.0); // 5 unit search radius
-        
+
         for nearby_entity in nearby_entities {
             if entity != nearby_entity {
                 collision_pairs.add_pair(entity, nearby_entity);
@@ -41,9 +41,9 @@ pub fn aabb_collision_system(
     mut collision_events: MessageWriter<CollisionEvent>,
 ) {
     for &(entity_a, entity_b) in &collision_pairs.pairs {
-        if let (Ok((transform_a, aabb_a)), Ok((transform_b, aabb_b))) = 
-            (aabb_query.get(entity_a), aabb_query.get(entity_b)) {
-            
+        if let (Ok((transform_a, aabb_a)), Ok((transform_b, aabb_b))) =
+            (aabb_query.get(entity_a), aabb_query.get(entity_b))
+        {
             if aabb_a.overlaps(transform_a.translation, aabb_b, transform_b.translation) {
                 collision_events.write(CollisionEvent {
                     entity_a,
@@ -64,14 +64,14 @@ pub fn sphere_collision_system(
     mut collision_events: MessageWriter<CollisionEvent>,
 ) {
     for &(entity_a, entity_b) in &collision_pairs.pairs {
-        if let (Ok((transform_a, sphere_a)), Ok((transform_b, sphere_b))) = 
-            (sphere_query.get(entity_a), sphere_query.get(entity_b)) {
-            
+        if let (Ok((transform_a, sphere_a)), Ok((transform_b, sphere_b))) =
+            (sphere_query.get(entity_a), sphere_query.get(entity_b))
+        {
             if sphere_a.overlaps(transform_a.translation, sphere_b, transform_b.translation) {
                 let center_a = transform_a.translation + sphere_a.center_offset;
                 let center_b = transform_b.translation + sphere_b.center_offset;
                 let direction = center_b - center_a;
-                
+
                 collision_events.write(CollisionEvent {
                     entity_a,
                     entity_b,
@@ -93,12 +93,17 @@ pub fn sensor_system(
 ) {
     for &(sensor_entity, other_entity) in &collision_pairs.pairs {
         // Check if one entity is a sensor
-        if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = 
-            (sensor_query.get(sensor_entity), entity_query.get(other_entity)) {
-            
-            if sensor.is_active && 
-               sensor_sphere.overlaps(sensor_transform.translation, &PhysicsSphere::new(0.1), other_transform.translation) {
-                
+        if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = (
+            sensor_query.get(sensor_entity),
+            entity_query.get(other_entity),
+        ) {
+            if sensor.is_active
+                && sensor_sphere.overlaps(
+                    sensor_transform.translation,
+                    &PhysicsSphere::new(0.1),
+                    other_transform.translation,
+                )
+            {
                 trigger_events.write(TriggerEvent {
                     sensor_entity,
                     triggered_by: other_entity,
@@ -107,12 +112,17 @@ pub fn sensor_system(
             }
         }
         // Check reverse (other entity might be the sensor)
-        else if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = 
-            (sensor_query.get(other_entity), entity_query.get(sensor_entity)) {
-            
-            if sensor.is_active && 
-               sensor_sphere.overlaps(sensor_transform.translation, &PhysicsSphere::new(0.1), other_transform.translation) {
-                
+        else if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = (
+            sensor_query.get(other_entity),
+            entity_query.get(sensor_entity),
+        ) {
+            if sensor.is_active
+                && sensor_sphere.overlaps(
+                    sensor_transform.translation,
+                    &PhysicsSphere::new(0.1),
+                    other_transform.translation,
+                )
+            {
                 trigger_events.write(TriggerEvent {
                     sensor_entity: other_entity,
                     triggered_by: sensor_entity,
@@ -133,52 +143,55 @@ pub fn collision_response_system(
     for collision_event in collision_events.read() {
         let entity_a = collision_event.entity_a;
         let entity_b = collision_event.entity_b;
-        
+
         // Get rigid body types
         let body_type_a = rigid_body_query.get(entity_a).map(|rb| &rb.body_type).ok();
         let body_type_b = rigid_body_query.get(entity_b).map(|rb| &rb.body_type).ok();
-        
+
         // Skip collision response for static bodies
-        if matches!(body_type_a, Some(RigidBodyVariant::Static)) && 
-           matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+        if matches!(body_type_a, Some(RigidBodyVariant::Static))
+            && matches!(body_type_b, Some(RigidBodyVariant::Static))
+        {
             continue;
         }
-        
+
         // Skip if both entities are static
-        if matches!(body_type_a, Some(RigidBodyVariant::Static)) && 
-           matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+        if matches!(body_type_a, Some(RigidBodyVariant::Static))
+            && matches!(body_type_b, Some(RigidBodyVariant::Static))
+        {
             continue;
         }
-        
+
         // Handle collision between two dynamic entities
         if entity_a != entity_b {
             if let Ok(velocities) = velocity_query.get_many_mut([entity_a, entity_b]) {
                 let [mut vel_a, mut vel_b] = velocities;
-            
-            let mass_a = mass_query.get(entity_a).map(|m| m.value).unwrap_or(1.0);
-            let mass_b = mass_query.get(entity_b).map(|m| m.value).unwrap_or(1.0);
-            
-            // Simple elastic collision response
-            let restitution = 0.8; // Bounciness factor
-            let relative_velocity = vel_a.linear - vel_b.linear;
-            let velocity_along_normal = relative_velocity.dot(collision_event.normal);
-            
-            // Don't resolve if objects are separating
-            if velocity_along_normal > 0.0 {
-                continue;
-            }
-            
-            // Calculate collision impulse
-            let impulse_magnitude = -(1.0 + restitution) * velocity_along_normal / (mass_a + mass_b);
-            let impulse = collision_event.normal * impulse_magnitude;
-            
-            // Apply impulse based on rigid body types
-            if !matches!(body_type_a, Some(RigidBodyVariant::Static)) {
-                vel_a.linear += impulse * mass_a;
-            }
-            if !matches!(body_type_b, Some(RigidBodyVariant::Static)) {
-                vel_b.linear -= impulse * mass_b;
-            }
+
+                let mass_a = mass_query.get(entity_a).map(|m| m.value).unwrap_or(1.0);
+                let mass_b = mass_query.get(entity_b).map(|m| m.value).unwrap_or(1.0);
+
+                // Simple elastic collision response
+                let restitution = 0.8; // Bounciness factor
+                let relative_velocity = vel_a.linear - vel_b.linear;
+                let velocity_along_normal = relative_velocity.dot(collision_event.normal);
+
+                // Don't resolve if objects are separating
+                if velocity_along_normal > 0.0 {
+                    continue;
+                }
+
+                // Calculate collision impulse
+                let impulse_magnitude =
+                    -(1.0 + restitution) * velocity_along_normal / (mass_a + mass_b);
+                let impulse = collision_event.normal * impulse_magnitude;
+
+                // Apply impulse based on rigid body types
+                if !matches!(body_type_a, Some(RigidBodyVariant::Static)) {
+                    vel_a.linear += impulse * mass_a;
+                }
+                if !matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+                    vel_b.linear -= impulse * mass_b;
+                }
             }
         }
     }
@@ -198,7 +211,7 @@ pub fn raycast_system(
             point: Vec3::ZERO,
             normal: Vec3::ZERO,
         };
-        
+
         // Check intersection with all obstacles
         for (transform, aabb) in obstacle_query.iter() {
             if let Some(hit) = ray_aabb_intersection(
@@ -213,7 +226,7 @@ pub fn raycast_system(
                 }
             }
         }
-        
+
         raycast_results.write(RaycastResultEvent {
             ray_id: raycast_event.ray_id,
             hit: if hit_found { Some(closest_hit) } else { None },
@@ -284,16 +297,16 @@ fn ray_aabb_intersection(
     aabb: &AABB,
 ) -> Option<RaycastHit> {
     let (aabb_min, aabb_max) = aabb.get_bounds(aabb_center);
-    
+
     let mut t_min: f32 = 0.0;
     let mut t_max: f32 = f32::INFINITY;
-    
+
     for i in 0..3 {
         let origin_component = ray_origin[i];
         let direction_component = ray_direction[i];
         let min_component = aabb_min[i];
         let max_component = aabb_max[i];
-        
+
         if direction_component.abs() < 0.0001 {
             // Ray is parallel to this axis
             if origin_component < min_component || origin_component > max_component {
@@ -302,22 +315,22 @@ fn ray_aabb_intersection(
         } else {
             let t1 = (min_component - origin_component) / direction_component;
             let t2 = (max_component - origin_component) / direction_component;
-            
+
             let (t_near, t_far) = if t1 < t2 { (t1, t2) } else { (t2, t1) };
-            
+
             t_min = t_min.max(t_near);
             t_max = t_max.min(t_far);
-            
+
             if t_min > t_max {
                 return None; // No intersection
             }
         }
     }
-    
+
     if t_min >= 0.0 {
         let hit_point = ray_origin + ray_direction * t_min;
         let normal = calculate_aabb_normal(hit_point, aabb_center, aabb);
-        
+
         Some(RaycastHit {
             entity: Entity::PLACEHOLDER, // Would be filled in by the caller
             distance: t_min,
@@ -333,7 +346,7 @@ fn ray_aabb_intersection(
 fn calculate_aabb_normal(hit_point: Vec3, aabb_center: Vec3, _aabb: &AABB) -> Vec3 {
     let local_point = hit_point - aabb_center;
     let abs_local = local_point.abs();
-    
+
     // Find the axis with the largest component (closest to face)
     if abs_local.x >= abs_local.y && abs_local.x >= abs_local.z {
         Vec3::new(local_point.x.signum(), 0.0, 0.0)

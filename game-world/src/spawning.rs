@@ -1,12 +1,12 @@
 //! World entity spawning system for Cosmic Dominion
 
-use bevy::render::render_resource::PrimitiveTopology;
+use crate::fog::{Faction, VisionProvider};
 use bevy::asset::RenderAssetUsages;
 use bevy::mesh::Indices;
-use tracing::info;
 use bevy::prelude::*;
-use game_assets::{models, Cult};
-use crate::fog::{VisionProvider, Faction};
+use bevy::render::render_resource::PrimitiveTopology;
+use game_assets::{Cult, models};
+use tracing::info;
 
 /// Marker component for the cult leader
 #[derive(Component)]
@@ -64,19 +64,51 @@ pub fn spawn_starting_scene(
     info!("Spawning starting scene for Cosmic Dominion");
 
     // Spawn leadership building at center
-    spawn_leadership_building(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::ZERO, Cult::Crimson);
+    spawn_leadership_building(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::ZERO,
+        Cult::Crimson,
+    );
 
     // Spawn cult leader on platform (slightly elevated and to the side)
-    spawn_cult_leader(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(5.0, 2.0, 0.0), Cult::Crimson);
+    spawn_cult_leader(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(5.0, 2.0, 0.0),
+        Cult::Crimson,
+    );
 
     // Spawn player's starting unit (acolyte)
-    spawn_player_unit(&mut commands, &asset_server, Vec3::new(-5.0, 0.0, 0.0), UnitType::Acolyte);
+    spawn_player_unit(
+        &mut commands,
+        &asset_server,
+        Vec3::new(-5.0, 0.0, 0.0),
+        UnitType::Acolyte,
+    );
 
     // Spawn initial creature
-    spawn_initial_creature(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, -8.0), CreatureType::CorruptedBeast);
+    spawn_initial_creature(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(0.0, 0.0, -8.0),
+        CreatureType::CorruptedBeast,
+    );
 
     // Spawn ritual totem
-    spawn_totem(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, 5.0));
+    spawn_totem(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(0.0, 0.0, 5.0),
+    );
 
     // Spawn additional atmospheric elements
     spawn_cult_banners(&mut commands, &mut meshes, &mut materials, Cult::Crimson);
@@ -136,7 +168,7 @@ fn spawn_leadership_building(
 /// Spawn the cult leader
 fn spawn_cult_leader(
     commands: &mut Commands,
-    asset_server: &AssetServer,
+    _asset_server: &AssetServer,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     position: Vec3,
@@ -221,7 +253,7 @@ fn spawn_player_unit(
 /// Spawn the initial creature
 fn spawn_initial_creature(
     commands: &mut Commands,
-    asset_server: &AssetServer,
+    _asset_server: &AssetServer,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     position: Vec3,
@@ -399,8 +431,13 @@ fn create_cult_symbol_mesh() -> Mesh {
 
     // Generate star points
     for i in 0..points * 2 {
-        let angle = (i as f32 / (points * 2) as f32) * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
-        let radius = if i % 2 == 0 { outer_radius } else { inner_radius };
+        let angle =
+            (i as f32 / (points * 2) as f32) * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
+        let radius = if i % 2 == 0 {
+            outer_radius
+        } else {
+            inner_radius
+        };
 
         positions.push([angle.cos() * radius, 0.0, angle.sin() * radius]);
     }
@@ -412,7 +449,10 @@ fn create_cult_symbol_mesh() -> Mesh {
         indices.push(((i + 1) % (points * 2) + 1) as u32);
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_indices(Indices::U32(indices))
 }

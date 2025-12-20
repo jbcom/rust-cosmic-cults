@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use std::collections::{VecDeque, HashMap};
+use std::collections::{HashMap, VecDeque};
 
 // Resource abstraction for AI decision making
 #[derive(Clone, Debug)]
@@ -28,7 +28,11 @@ impl Default for TeamResources {
         capacity.insert("souls".to_string(), 1000);
         capacity.insert("knowledge".to_string(), 500);
 
-        Self { current, income_rate, capacity }
+        Self {
+            current,
+            income_rate,
+            capacity,
+        }
     }
 }
 
@@ -103,10 +107,8 @@ impl AIDecisionMaker {
 
         // Evaluate building units
         let unit_score = evaluate_unit_production(priorities, resources, unit_count);
-        self.evaluation_scores.push((
-            DecisionType::BuildUnit("warrior".to_string()),
-            unit_score,
-        ));
+        self.evaluation_scores
+            .push((DecisionType::BuildUnit("warrior".to_string()), unit_score));
 
         // Evaluate building structures
         let structure_score = evaluate_structure_building(priorities, resources, building_count);
@@ -137,10 +139,13 @@ impl AIDecisionMaker {
         ));
 
         // Sort by score and add best decisions to queue
-        self.evaluation_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        self.evaluation_scores
+            .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
         // Collect decisions to add to avoid borrowing conflicts
-        let decisions_to_add: Vec<(DecisionType, f32)> = self.evaluation_scores.iter()
+        let decisions_to_add: Vec<(DecisionType, f32)> = self
+            .evaluation_scores
+            .iter()
             .take(3)
             .filter(|(_, score)| *score > 0.5)
             .map(|(decision_type, score)| (decision_type.clone(), *score))
@@ -156,12 +161,14 @@ impl AIDecisionMaker {
         let decision = AIDecision {
             decision_type,
             priority,
-            timestamp: 0.0, // Would use actual time
+            timestamp: 0.0,   // Would use actual time
             expires_at: 30.0, // 30 second expiration
         };
 
         // Insert based on priority
-        let position = self.decision_queue.iter()
+        let position = self
+            .decision_queue
+            .iter()
             .position(|d| d.priority < priority)
             .unwrap_or(self.decision_queue.len());
 
@@ -196,22 +203,16 @@ pub fn evaluate_decision(
     match decision_type {
         DecisionType::BuildUnit(_) => {
             evaluate_unit_production(priorities, resources, context.unit_count)
-        },
+        }
         DecisionType::BuildStructure(_) => {
             evaluate_structure_building(priorities, resources, context.building_count)
-        },
-        DecisionType::Research(_) => {
-            evaluate_research(priorities, resources)
-        },
-        DecisionType::Attack(_) => {
-            evaluate_attack(priorities, context.unit_count)
-        },
-        DecisionType::Defend(_) => {
-            evaluate_defense(priorities, context)
-        },
+        }
+        DecisionType::Research(_) => evaluate_research(priorities, resources),
+        DecisionType::Attack(_) => evaluate_attack(priorities, context.unit_count),
+        DecisionType::Defend(_) => evaluate_defense(priorities, context),
         DecisionType::Expand(_) => {
             evaluate_expansion(priorities, resources, context.building_count)
-        },
+        }
     }
 }
 
@@ -274,10 +275,7 @@ fn evaluate_structure_building(
     score.min(1.0)
 }
 
-fn evaluate_research(
-    priorities: &AIPriorities,
-    resources: &TeamResources,
-) -> f32 {
+fn evaluate_research(priorities: &AIPriorities, resources: &TeamResources) -> f32 {
     let mut score = priorities.technology;
 
     // Check if we have sufficient resources
@@ -295,10 +293,7 @@ fn evaluate_research(
     score.min(1.0)
 }
 
-fn evaluate_attack(
-    priorities: &AIPriorities,
-    unit_count: usize,
-) -> f32 {
+fn evaluate_attack(priorities: &AIPriorities, unit_count: usize) -> f32 {
     let mut score = priorities.military * 0.8;
 
     // Need sufficient units to attack
@@ -311,10 +306,7 @@ fn evaluate_attack(
     score.min(1.0)
 }
 
-fn evaluate_defense(
-    priorities: &AIPriorities,
-    context: &EvaluationContext,
-) -> f32 {
+fn evaluate_defense(priorities: &AIPriorities, context: &EvaluationContext) -> f32 {
     let mut score = priorities.military * 0.6;
 
     // Increase if under threat
@@ -407,9 +399,9 @@ pub fn decision_making_system(
         decision_maker.clear_expired_decisions(current_time);
 
         // Re-evaluate decisions periodically
-        if decision_maker.decision_queue.is_empty() ||
-           current_time - decision_maker.last_decision_time > 5.0 {
-
+        if decision_maker.decision_queue.is_empty()
+            || current_time - decision_maker.last_decision_time > 5.0
+        {
             // Create evaluation context (in real implementation, this would come from game state)
             let priorities = AIPriorities::default();
             let resources = TeamResources::default();
@@ -427,33 +419,33 @@ pub fn decision_making_system(
                 DecisionType::BuildUnit(unit_type) => {
                     // Would add unit construction behavior
                     println!("AI Decision: Build unit {}", unit_type);
-                },
+                }
                 DecisionType::BuildStructure(structure_type) => {
                     // Would add structure construction behavior
                     println!("AI Decision: Build structure {}", structure_type);
-                },
+                }
                 DecisionType::Research(tech) => {
                     // Would add research behavior
                     println!("AI Decision: Research {}", tech);
-                },
+                }
                 DecisionType::Attack(target_pos) => {
                     commands.entity(entity).insert(crate::AttackBehavior {
                         target: None, // Would get target entity from position
                         aggression_level: 0.8,
                     });
                     println!("AI Decision: Attack at {:?}", target_pos);
-                },
+                }
                 DecisionType::Defend(defend_pos) => {
                     commands.entity(entity).insert(crate::DefendBehavior {
                         defend_position: *defend_pos,
                         patrol_radius: 15.0,
                     });
                     println!("AI Decision: Defend at {:?}", defend_pos);
-                },
+                }
                 DecisionType::Expand(expansion_pos) => {
                     // Would add expansion behavior
                     println!("AI Decision: Expand to {:?}", expansion_pos);
-                },
+                }
             }
 
             // Mark decision as completed

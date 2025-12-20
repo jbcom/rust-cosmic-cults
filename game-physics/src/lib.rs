@@ -4,21 +4,23 @@
 //! and movement systems for RTS games. This crate forms the base layer that
 //! other game crates (combat, units, AI) depend on.
 
-use bevy::prelude::*;
 use avian3d::prelude as avian;
+use bevy::prelude::*;
 // Avoid sphere name conflict with Bevy's math Sphere
 use crate::components::Sphere as PhysicsSphere;
 
-pub mod components;
-pub mod spatial;
 pub mod collision;
+pub mod components;
 pub mod movement;
+pub mod spatial;
 
 // Re-export commonly used types
+pub use collision::{
+    CollisionEvent, CollisionType, RaycastEvent, RaycastHit, RaycastResultEvent, TriggerEvent,
+};
 pub use components::*;
-pub use spatial::{GlobalSpatialGrid, SpatialGrid, BroadPhaseCollisionPairs};
-pub use collision::{CollisionEvent, TriggerEvent, RaycastEvent, RaycastResultEvent, CollisionType, RaycastHit};
-pub use movement::{FormationMember, Formation, FormationType, FlockingAgent};
+pub use movement::{FlockingAgent, Formation, FormationMember, FormationType};
+pub use spatial::{BroadPhaseCollisionPairs, GlobalSpatialGrid, SpatialGrid};
 
 // ==============================================================================
 // PHYSICS PLUGIN
@@ -51,14 +53,14 @@ impl Plugin for GamePhysicsPlugin {
     fn build(&self, app: &mut App) {
         // Add resources
         app.insert_resource(GlobalSpatialGrid::new(self.spatial_grid_cell_size))
-           .insert_resource(BroadPhaseCollisionPairs::default());
+            .insert_resource(BroadPhaseCollisionPairs::default());
 
         // Add collision events
         if self.enable_collision_detection {
             app.add_message::<CollisionEvent>()
-               .add_message::<TriggerEvent>()
-               .add_message::<RaycastEvent>()
-               .add_message::<RaycastResultEvent>();
+                .add_message::<TriggerEvent>()
+                .add_message::<RaycastEvent>()
+                .add_message::<RaycastResultEvent>();
         }
 
         // Add movement events
@@ -70,39 +72,48 @@ impl Plugin for GamePhysicsPlugin {
         app.add_plugins(avian::PhysicsPlugins::default());
 
         if self.enable_movement_systems {
-            app.add_systems(Update, (
-                // movement::physics_movement_system, // Replaced by Avian
-                sync_velocity_system,
-                movement::simple_movement_system,
-                movement::pathfinding_movement_system,
-                movement::waypoint_movement_system,
-            ));
+            app.add_systems(
+                Update,
+                (
+                    // movement::physics_movement_system, // Replaced by Avian
+                    sync_velocity_system,
+                    movement::simple_movement_system,
+                    movement::pathfinding_movement_system,
+                    movement::waypoint_movement_system,
+                ),
+            );
         }
 
         if self.enable_collision_detection {
-            app.add_systems(Update, (
-                collision::broad_phase_collision_system,
-                collision::aabb_collision_system,
-                collision::sphere_collision_system,
-                collision::sensor_system,
-                collision::collision_response_system,
-                collision::raycast_system,
-            ));
+            app.add_systems(
+                Update,
+                (
+                    collision::broad_phase_collision_system,
+                    collision::aabb_collision_system,
+                    collision::sphere_collision_system,
+                    collision::sensor_system,
+                    collision::collision_response_system,
+                    collision::raycast_system,
+                ),
+            );
         }
 
         if self.enable_pathfinding {
-            app.add_systems(Update, (
-                movement::formation_movement_system,
-                movement::flocking_system,
-                movement::obstacle_avoidance_system,
-            ));
+            app.add_systems(
+                Update,
+                (
+                    movement::formation_movement_system,
+                    movement::flocking_system,
+                    movement::obstacle_avoidance_system,
+                ),
+            );
         }
 
         // Add spatial indexing update system
-        app.add_systems(PostUpdate, (
-            spatial_indexing_update_system,
-            movement_command_system,
-        ));
+        app.add_systems(
+            PostUpdate,
+            (spatial_indexing_update_system, movement_command_system),
+        );
     }
 }
 
@@ -118,18 +129,9 @@ pub struct MovementCommandEvent {
 
 #[derive(Clone, Debug)]
 pub enum MovementCommand {
-    MoveTo {
-        position: Vec3,
-        speed: f32,
-    },
-    Follow {
-        target: Entity,
-        distance: f32,
-    },
-    SetPath {
-        waypoints: Vec<Vec3>,
-        speed: f32,
-    },
+    MoveTo { position: Vec3, speed: f32 },
+    Follow { target: Entity, distance: f32 },
+    SetPath { waypoints: Vec<Vec3>, speed: f32 },
     Stop,
 }
 
@@ -138,7 +140,14 @@ pub enum MovementCommand {
 // ==============================================================================
 
 fn sync_velocity_system(
-    mut query: Query<(&Velocity, &mut avian::LinearVelocity, &mut avian::AngularVelocity), Changed<Velocity>>,
+    mut query: Query<
+        (
+            &Velocity,
+            &mut avian::LinearVelocity,
+            &mut avian::AngularVelocity,
+        ),
+        Changed<Velocity>,
+    >,
 ) {
     for (vel, mut lin, mut ang) in query.iter_mut() {
         lin.0 = vel.linear;
@@ -233,7 +242,10 @@ pub fn movement_command_system(
                 }
             }
 
-            MovementCommand::Follow { target: _, distance: _ } => {
+            MovementCommand::Follow {
+                target: _,
+                distance: _,
+            } => {
                 // Implementation would require target tracking system
                 // For now, just clear current movement
                 if let Ok(mut controller) = movement_query.get_mut(event.entity) {
@@ -257,20 +269,22 @@ pub fn create_physics_entity(
     velocity: Vec3,
     mass: f32,
 ) -> Entity {
-    commands.spawn((
-        Transform::from_translation(position),
-        GlobalTransform::default(),
-        SpatialData::new(position),
-        SpatialIndex::new(position, 10.0),
-        Velocity::new(velocity),
-        Acceleration::default(),
-        Mass::new(mass),
-        Friction::default(),
-        // Avian components
-        avian::RigidBody::Dynamic,
-        avian::LinearVelocity(velocity),
-        avian::AngularVelocity::ZERO,
-    )).id()
+    commands
+        .spawn((
+            Transform::from_translation(position),
+            GlobalTransform::default(),
+            SpatialData::new(position),
+            SpatialIndex::new(position, 10.0),
+            Velocity::new(velocity),
+            Acceleration::default(),
+            Mass::new(mass),
+            Friction::default(),
+            // Avian components
+            avian::RigidBody::Dynamic,
+            avian::LinearVelocity(velocity),
+            avian::AngularVelocity::ZERO,
+        ))
+        .id()
 }
 
 /// Create a collider entity with AABB collision
@@ -292,10 +306,7 @@ pub fn create_aabb_collider(
     ));
 
     if is_sensor {
-        entity_commands.insert((
-            Sensor { is_active: true },
-            avian::Sensor,
-        ));
+        entity_commands.insert((Sensor { is_active: true }, avian::Sensor));
     }
 
     entity_commands.id()
@@ -320,10 +331,7 @@ pub fn create_sphere_collider(
     ));
 
     if is_sensor {
-        entity_commands.insert((
-            Sensor { is_active: true },
-            avian::Sensor,
-        ));
+        entity_commands.insert((Sensor { is_active: true }, avian::Sensor));
     }
 
     entity_commands.id()
@@ -336,21 +344,41 @@ pub fn create_sphere_collider(
 /// Commonly used imports
 pub mod prelude {
     pub use crate::{
+        AABB,
+        Acceleration,
+        BroadPhaseCollisionPairs,
+        CollisionEvent,
+        CollisionMask,
+        Friction,
         GamePhysicsPlugin,
-        // Components
-        GridPosition, Velocity, Acceleration, Mass, Friction,
-        MovementController, MovementTarget, MovementPath, MovementType,
-        SpatialData, SpatialIndex, CollisionMask,
-        AABB, Sensor, RigidBodyType, RigidBodyVariant,
-        // Systems
-        spatial_indexing_update_system, movement_command_system,
-        // Events
-        MovementCommandEvent, MovementCommand,
-        CollisionEvent, TriggerEvent, RaycastEvent, RaycastResultEvent,
         // Resources
-        GlobalSpatialGrid, BroadPhaseCollisionPairs,
+        GlobalSpatialGrid,
+        // Components
+        GridPosition,
+        Mass,
+        MovementCommand,
+        // Events
+        MovementCommandEvent,
+        MovementController,
+        MovementPath,
+        MovementTarget,
+        MovementType,
+        RaycastEvent,
+        RaycastResultEvent,
+        RigidBodyType,
+        RigidBodyVariant,
+        Sensor,
+        SpatialData,
+        SpatialIndex,
+        TriggerEvent,
+        Velocity,
+        create_aabb_collider,
         // Utilities
-        create_physics_entity, create_aabb_collider, create_sphere_collider,
+        create_physics_entity,
+        create_sphere_collider,
+        movement_command_system,
+        // Systems
+        spatial_indexing_update_system,
     };
 }
 impl bevy::prelude::Message for MovementCommandEvent {}

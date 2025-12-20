@@ -1,11 +1,11 @@
 //! Production terrain generation and biome system for Cosmic Dominion
 
-use bevy::render::render_resource::PrimitiveTopology;
 use bevy::asset::RenderAssetUsages;
 use bevy::mesh::Indices;
 use bevy::prelude::*;
-use rand::{Rng, SeedableRng};
+use bevy::render::render_resource::PrimitiveTopology;
 use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
 
 /// Terrain tile component representing a single tile in the game world
@@ -95,8 +95,8 @@ pub fn generate_terrain_system(
     let mut rng = StdRng::seed_from_u64(terrain_config.seed);
 
     // Generate a 3x3 starting area with surrounding terrain
-    let start_radius = 5; // 11x11 grid centered at origin
-    let fog_radius = 8;   // Additional fog tiles beyond visible area
+    let _start_radius = 5; // 11x11 grid centered at origin
+    let fog_radius = 8; // Additional fog tiles beyond visible area
 
     // Track generated tiles for biome clustering
     let mut tile_biomes: HashMap<(i32, i32), BiomeType> = HashMap::new();
@@ -114,7 +114,9 @@ pub fn generate_terrain_system(
                 let mut neighbor_biomes = Vec::new();
                 for dx in -1..=1 {
                     for dz in -1..=1 {
-                        if dx == 0 && dz == 0 { continue; }
+                        if dx == 0 && dz == 0 {
+                            continue;
+                        }
                         if let Some(&neighbor_biome) = tile_biomes.get(&(x + dx, z + dz)) {
                             neighbor_biomes.push(neighbor_biome);
                         }
@@ -142,7 +144,8 @@ pub fn generate_terrain_system(
             let distance_from_center = ((x * x + z * z) as f32).sqrt();
 
             // Calculate corruption level based on distance and biome
-            let corruption_level = calculate_corruption_level(distance_from_center, biome, &mut rng);
+            let corruption_level =
+                calculate_corruption_level(distance_from_center, biome, &mut rng);
 
             // Create tile mesh with height variation
             let height_variation = biome.get_height_variation();
@@ -278,11 +281,15 @@ fn create_tile_mesh(size: f32, height: f32, corruption_level: f32) -> Mesh {
             let z = -half_size + j as f32 * step;
 
             // Add some noise to height for variation
-            let local_height = height + (corruption_level * (x * 0.1).sin() * (z * 0.1).cos() * corruption_displacement);
+            let local_height = height
+                + (corruption_level * (x * 0.1).sin() * (z * 0.1).cos() * corruption_displacement);
 
             positions.push([x, local_height, z]);
             normals.push([0.0, 1.0, 0.0]);
-            uvs.push([i as f32 / subdivisions as f32, j as f32 / subdivisions as f32]);
+            uvs.push([
+                i as f32 / subdivisions as f32,
+                j as f32 / subdivisions as f32,
+            ]);
         }
     }
 
@@ -304,14 +311,18 @@ fn create_tile_mesh(size: f32, height: f32, corruption_level: f32) -> Mesh {
         }
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 /// Spawn decorative elements for biomes
+#[allow(clippy::too_many_arguments)]
 fn spawn_biome_decorations(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -359,7 +370,8 @@ fn spawn_biome_decorations(
                     world_x + rng.random_range(-tile_size * 0.3..tile_size * 0.3),
                     rng.random_range(0.5..2.0),
                     world_z + rng.random_range(-tile_size * 0.3..tile_size * 0.3),
-                ).with_scale(Vec3::splat(rng.random_range(0.5..1.5))),
+                )
+                .with_scale(Vec3::splat(rng.random_range(0.5..1.5))),
             ));
         }
         BiomeType::VoidRift => {
@@ -398,11 +410,7 @@ fn spawn_biome_decorations(
             commands.spawn((
                 Mesh3d(pool_mesh),
                 MeshMaterial3d(pool_material),
-                Transform::from_xyz(
-                    world_x,
-                    -0.3,
-                    world_z,
-                ).with_scale(Vec3::new(1.0, 0.2, 1.0)),
+                Transform::from_xyz(world_x, -0.3, world_z).with_scale(Vec3::new(1.0, 0.2, 1.0)),
             ));
         }
         _ => {}
@@ -452,10 +460,13 @@ fn create_crystal_mesh(rng: &mut StdRng) -> Mesh {
         indices.push(2 + i as u32);
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 /// Create a void pillar mesh

@@ -1,35 +1,45 @@
 // Game AI crate - Production-ready AI systems for Cosmic Dominion
 #![allow(unused)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::vec_box)]
+#![allow(clippy::new_without_default)]
 
 use bevy::prelude::*;
 use game_physics::prelude::*;
-use game_units::{Leader, Unit, Team};
+use game_units::{Leader, Team, Unit};
 use std::collections::HashMap;
 
 // Core modules
-pub mod types;
-pub mod systems;
-pub mod cult_profiles;
-pub mod states;
 pub mod behaviors;
+pub mod cult_profiles;
 pub mod decision;
+pub mod states;
+pub mod systems;
 pub mod targeting;
+pub mod types;
 
 #[cfg(test)]
 pub mod integration_test;
 
 // Public re-exports for easy access - specific imports to avoid conflicts
-pub use types::{AIRole, AIMessage, AICoordination};
-pub use cult_profiles::{PsychologicalEvent, CultProfile, PsychologicalState, create_cult_profile, create_cult_ai, create_cult_coordination};
-pub use systems::state_machine::{AIStateMachine as OldStateMachine, GatheringBehavior, AttackBehavior, DefendBehavior, RetreatBehavior};
-pub use systems::behavior_tree::{BehaviorTree as OldBehaviorTree};
-pub use systems::utility_ai::*;
-pub use systems::decision_making::{AIDecisionMaker};
-pub use systems::ai_execution::{AIGlobalState, AICommandEvent, AIPerceptionEvent};
-pub use states::{AIStateMachine, AIState, StateTransitionTrigger};
-pub use behaviors::{BehaviorTree, BehaviorNode, NodeStatus, Blackboard, BlackboardValue};
+pub use behaviors::{BehaviorNode, BehaviorTree, Blackboard, BlackboardValue, NodeStatus};
+pub use cult_profiles::{
+    CultProfile, PsychologicalEvent, PsychologicalState, create_cult_ai, create_cult_coordination,
+    create_cult_profile,
+};
 pub use decision::*;
+pub use states::{AIState, AIStateMachine, StateTransitionTrigger};
+pub use systems::ai_execution::{AICommandEvent, AIGlobalState, AIPerceptionEvent};
+pub use systems::behavior_tree::BehaviorTree as OldBehaviorTree;
+pub use systems::decision_making::AIDecisionMaker;
+pub use systems::state_machine::{
+    AIStateMachine as OldStateMachine, AttackBehavior, DefendBehavior, GatheringBehavior,
+    RetreatBehavior,
+};
+pub use systems::utility_ai::*;
 pub use targeting::*;
+pub use types::{AICoordination, AIMessage, AIRole};
 
 // SystemSets for organizing AI system execution order
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
@@ -55,10 +65,8 @@ impl Plugin for GameAIPlugin {
             .add_message::<PsychologicalEvent>()
             .add_message::<crate::systems::AICommandEvent>()
             .add_message::<crate::systems::AIPerceptionEvent>()
-
             // Add resources
             .insert_resource(crate::systems::AIGlobalState::default())
-
             // Configure SystemSets for AI ordering
             .configure_sets(
                 Update,
@@ -67,9 +75,10 @@ impl Plugin for GameAIPlugin {
                     AISystemSet::DecisionAI,
                     AISystemSet::Messaging,
                     AISystemSet::Execution,
-                ).chain().run_if(any_ai_entities_exist),
+                )
+                    .chain()
+                    .run_if(any_ai_entities_exist),
             )
-
             // Core AI systems - update basic AI state
             .add_systems(
                 Update,
@@ -78,15 +87,15 @@ impl Plugin for GameAIPlugin {
                     crate::systems::state_machine::state_machine_update_system,
                     crate::systems::behavior_tree::behavior_tree_system,
                     crate::systems::utility_ai::utility_ai_system,
-
                     // From new modules
                     crate::states::state_execution_system,
                     crate::states::state_transition_system,
                     crate::behaviors::behavior_tree_execution_system,
                     crate::cult_profiles::update_psychological_state_system,
-                ).chain().in_set(AISystemSet::CoreAI),
+                )
+                    .chain()
+                    .in_set(AISystemSet::CoreAI),
             )
-
             // Decision-making systems - evaluate and select actions
             .add_systems(
                 Update,
@@ -96,9 +105,10 @@ impl Plugin for GameAIPlugin {
                     crate::decision::goal_execution_system,
                     crate::targeting::target_acquisition_system,
                     crate::targeting::target_validation_system,
-                ).chain().in_set(AISystemSet::DecisionAI),
+                )
+                    .chain()
+                    .in_set(AISystemSet::DecisionAI),
             )
-
             // Communication and coordination systems
             .add_systems(
                 Update,
@@ -107,9 +117,10 @@ impl Plugin for GameAIPlugin {
                     crate::cult_profiles::handle_psychological_events,
                     crate::systems::perception_system,
                     crate::systems::squad_coordination_system,
-                ).chain().in_set(AISystemSet::Messaging),
+                )
+                    .chain()
+                    .in_set(AISystemSet::Messaging),
             )
-
             // Action execution systems - translate decisions to game commands
             .add_systems(
                 Update,
@@ -119,24 +130,29 @@ impl Plugin for GameAIPlugin {
                     crate::systems::ai_combat_system,
                     crate::targeting::line_of_sight_system,
                     crate::targeting::target_prediction_system,
-                ).chain().in_set(AISystemSet::Execution),
+                )
+                    .chain()
+                    .in_set(AISystemSet::Execution),
             );
     }
 }
 
 // Condition to check if any AI entities exist
 fn any_ai_entities_exist(
-    ai_query: Query<(), Or<(
-        With<OldStateMachine>,
-        With<OldBehaviorTree>,
-        With<UtilityAI>,
-        With<AIDecisionMaker>,
-        With<AICoordination>,
-        With<CultProfile>,
-        With<PsychologicalState>,
-        With<DecisionMaker>,
-        With<TargetSelector>,
-    )>>,
+    ai_query: Query<
+        (),
+        Or<(
+            With<OldStateMachine>,
+            With<OldBehaviorTree>,
+            With<UtilityAI>,
+            With<AIDecisionMaker>,
+            With<AICoordination>,
+            With<CultProfile>,
+            With<PsychologicalState>,
+            With<DecisionMaker>,
+            With<TargetSelector>,
+        )>,
+    >,
 ) -> bool {
     !ai_query.is_empty()
 }
@@ -144,7 +160,10 @@ fn any_ai_entities_exist(
 // AI coordination system - separated queries to avoid borrowing conflicts
 fn ai_coordination_system(
     leaders_query: Query<(Entity, &AICoordination, &Transform), With<Leader>>,
-    followers_query: Query<(Entity, &AICoordination, &Transform), (Without<Leader>, With<AICoordination>)>,
+    followers_query: Query<
+        (Entity, &AICoordination, &Transform),
+        (Without<Leader>, With<AICoordination>),
+    >,
     mut commands: Commands,
 ) {
     // Process leaders and their coordination separately
@@ -154,17 +173,21 @@ fn ai_coordination_system(
 
             // Check all potential followers
             for (follower_entity, follower_coord, follower_transform) in followers_query.iter() {
-                if !follower_coord.can_receive_orders || follower_coord.team_id != leader_coord.team_id {
+                if !follower_coord.can_receive_orders
+                    || follower_coord.team_id != leader_coord.team_id
+                {
                     continue;
                 }
 
                 let distance = leader_position.distance(follower_transform.translation);
                 if distance <= leader_coord.coordination_radius {
                     // Add coordination behavior
-                    commands.entity(follower_entity).insert(CoordinatedBehavior {
-                        leader: leader_entity,
-                        role: leader_coord.role.clone(),
-                    });
+                    commands
+                        .entity(follower_entity)
+                        .insert(CoordinatedBehavior {
+                            leader: leader_entity,
+                            role: leader_coord.role.clone(),
+                        });
                 }
             }
         }
@@ -181,10 +204,38 @@ pub struct CoordinatedBehavior {
 // AI action execution system that translates AI behaviors into physics commands
 fn ai_action_execution_system(
     mut movement_events: MessageWriter<MovementCommandEvent>,
-    gathering_query: Query<(Entity, &crate::systems::state_machine::GatheringBehavior, &Transform), Added<crate::systems::state_machine::GatheringBehavior>>,
-    attack_query: Query<(Entity, &crate::systems::state_machine::AttackBehavior, &Transform), Added<crate::systems::state_machine::AttackBehavior>>,
-    defend_query: Query<(Entity, &crate::systems::state_machine::DefendBehavior, &Transform), Added<crate::systems::state_machine::DefendBehavior>>,
-    retreat_query: Query<(Entity, &crate::systems::state_machine::RetreatBehavior, &Transform), Added<crate::systems::state_machine::RetreatBehavior>>,
+    gathering_query: Query<
+        (
+            Entity,
+            &crate::systems::state_machine::GatheringBehavior,
+            &Transform,
+        ),
+        Added<crate::systems::state_machine::GatheringBehavior>,
+    >,
+    attack_query: Query<
+        (
+            Entity,
+            &crate::systems::state_machine::AttackBehavior,
+            &Transform,
+        ),
+        Added<crate::systems::state_machine::AttackBehavior>,
+    >,
+    defend_query: Query<
+        (
+            Entity,
+            &crate::systems::state_machine::DefendBehavior,
+            &Transform,
+        ),
+        Added<crate::systems::state_machine::DefendBehavior>,
+    >,
+    retreat_query: Query<
+        (
+            Entity,
+            &crate::systems::state_machine::RetreatBehavior,
+            &Transform,
+        ),
+        Added<crate::systems::state_machine::RetreatBehavior>,
+    >,
     mut commands: Commands,
 ) {
     // Handle gathering behavior - move to resource location
@@ -200,10 +251,9 @@ fn ai_action_execution_system(
         }
 
         // Add movement controller if not present
-        commands.entity(entity).insert((
-            MovementController::default(),
-            Velocity::default(),
-        ));
+        commands
+            .entity(entity)
+            .insert((MovementController::default(), Velocity::default()));
     }
 
     // Handle attack behavior - move to target and engage
@@ -219,10 +269,9 @@ fn ai_action_execution_system(
         }
 
         // Add movement controller if not present
-        commands.entity(entity).insert((
-            MovementController::default(),
-            Velocity::default(),
-        ));
+        commands
+            .entity(entity)
+            .insert((MovementController::default(), Velocity::default()));
     }
 
     // Handle defend behavior - patrol around defense position
@@ -244,10 +293,9 @@ fn ai_action_execution_system(
         });
 
         // Add movement controller if not present
-        commands.entity(entity).insert((
-            MovementController::default(),
-            Velocity::default(),
-        ));
+        commands
+            .entity(entity)
+            .insert((MovementController::default(), Velocity::default()));
     }
 
     // Handle retreat behavior - move to safety
@@ -266,10 +314,9 @@ fn ai_action_execution_system(
         });
 
         // Add movement controller if not present
-        commands.entity(entity).insert((
-            MovementController::default(),
-            Velocity::default(),
-        ));
+        commands
+            .entity(entity)
+            .insert((MovementController::default(), Velocity::default()));
     }
 }
 
@@ -277,65 +324,79 @@ fn ai_action_execution_system(
 impl GameAIPlugin {
     /// Create a basic AI entity with state machine
     pub fn spawn_basic_ai(commands: &mut Commands, position: Vec3, ai_type: AIRole) -> Entity {
-        commands.spawn((
-            Transform::from_translation(position),
-            GlobalTransform::default(),
-            crate::states::AIStateMachine::default(),
-            AICoordination {
-                team_id: 1,
-                role: ai_type.clone(),
-                coordination_radius: 50.0,
-                can_give_orders: matches!(ai_type, AIRole::Leader),
-                can_receive_orders: true,
-            },
-            // Physics components
-            MovementController::default(),
-            Velocity::default(),
-            SpatialData::new(position),
-            CollisionMask::default(),
-        )).id()
+        commands
+            .spawn((
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                crate::states::AIStateMachine::default(),
+                AICoordination {
+                    team_id: 1,
+                    role: ai_type.clone(),
+                    coordination_radius: 50.0,
+                    can_give_orders: matches!(ai_type, AIRole::Leader),
+                    can_receive_orders: true,
+                },
+                // Physics components
+                MovementController::default(),
+                Velocity::default(),
+                SpatialData::new(position),
+                CollisionMask::default(),
+            ))
+            .id()
     }
 
     /// Create an advanced AI entity with behavior tree
-    pub fn spawn_behavior_tree_ai(commands: &mut Commands, position: Vec3, tree: crate::behaviors::BehaviorTree) -> Entity {
-        commands.spawn((
-            Transform::from_translation(position),
-            GlobalTransform::default(),
-            tree,
-            AICoordination {
-                team_id: 1,
-                role: AIRole::Follower,
-                coordination_radius: 30.0,
-                can_give_orders: false,
-                can_receive_orders: true,
-            },
-            // Physics components
-            MovementController::default(),
-            Velocity::default(),
-            SpatialData::new(position),
-            CollisionMask::default(),
-        )).id()
+    pub fn spawn_behavior_tree_ai(
+        commands: &mut Commands,
+        position: Vec3,
+        tree: crate::behaviors::BehaviorTree,
+    ) -> Entity {
+        commands
+            .spawn((
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                tree,
+                AICoordination {
+                    team_id: 1,
+                    role: AIRole::Follower,
+                    coordination_radius: 30.0,
+                    can_give_orders: false,
+                    can_receive_orders: true,
+                },
+                // Physics components
+                MovementController::default(),
+                Velocity::default(),
+                SpatialData::new(position),
+                CollisionMask::default(),
+            ))
+            .id()
     }
 
     /// Create a utility-based AI entity
-    pub fn spawn_utility_ai(commands: &mut Commands, position: Vec3, utility_ai: UtilityAI) -> Entity {
-        commands.spawn((
-            Transform::from_translation(position),
-            GlobalTransform::default(),
-            utility_ai,
-            AICoordination {
-                team_id: 1,
-                role: AIRole::Specialist("utility".to_string()),
-                coordination_radius: 40.0,
-                can_give_orders: false,
-                can_receive_orders: true,
-            },
-            // Physics components
-            MovementController::default(),
-            Velocity::default(),
-            SpatialData::new(position),
-            CollisionMask::default(),
-        )).id()
+    pub fn spawn_utility_ai(
+        commands: &mut Commands,
+        position: Vec3,
+        utility_ai: UtilityAI,
+    ) -> Entity {
+        commands
+            .spawn((
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                utility_ai,
+                AICoordination {
+                    team_id: 1,
+                    role: AIRole::Specialist("utility".to_string()),
+                    coordination_radius: 40.0,
+                    can_give_orders: false,
+                    can_receive_orders: true,
+                },
+                // Physics components
+                MovementController::default(),
+                Velocity::default(),
+                SpatialData::new(position),
+                CollisionMask::default(),
+            ))
+            .id()
     }
 
     /// Create a cult-specific AI entity
@@ -345,23 +406,25 @@ impl GameAIPlugin {
         let coordination = create_cult_coordination(&profile, AIRole::Follower);
         let psychological = PsychologicalState::default();
 
-        commands.spawn((
-            Transform::from_translation(position),
-            GlobalTransform::default(),
-            profile,
-            ai,
-            coordination,
-            psychological,
-            // Add decision maker
-            DecisionMaker::balanced(),
-            // Add target selector
-            TargetSelector::new(TargetPriority::Balanced),
-            // Physics components
-            MovementController::default(),
-            Velocity::default(),
-            SpatialData::new(position),
-            CollisionMask::default(),
-        )).id()
+        commands
+            .spawn((
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                profile,
+                ai,
+                coordination,
+                psychological,
+                // Add decision maker
+                DecisionMaker::balanced(),
+                // Add target selector
+                TargetSelector::new(TargetPriority::Balanced),
+                // Physics components
+                MovementController::default(),
+                Velocity::default(),
+                SpatialData::new(position),
+                CollisionMask::default(),
+            ))
+            .id()
     }
 }
 
@@ -374,12 +437,18 @@ pub mod presets {
 
         // Add aggressive transitions
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Idle, crate::states::StateTransitionTrigger::EnemyDetected),
-            crate::states::AIState::Attacking
+            (
+                crate::states::AIState::Idle,
+                crate::states::StateTransitionTrigger::EnemyDetected,
+            ),
+            crate::states::AIState::Attacking,
         );
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Gathering, crate::states::StateTransitionTrigger::EnemyDetected),
-            crate::states::AIState::Attacking
+            (
+                crate::states::AIState::Gathering,
+                crate::states::StateTransitionTrigger::EnemyDetected,
+            ),
+            crate::states::AIState::Attacking,
         );
 
         let coordination = AICoordination {
@@ -398,12 +467,18 @@ pub mod presets {
 
         // Add defensive transitions
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Idle, crate::states::StateTransitionTrigger::AlertRaised),
-            crate::states::AIState::Defending
+            (
+                crate::states::AIState::Idle,
+                crate::states::StateTransitionTrigger::AlertRaised,
+            ),
+            crate::states::AIState::Defending,
         );
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Attacking, crate::states::StateTransitionTrigger::HealthLow),
-            crate::states::AIState::Defending
+            (
+                crate::states::AIState::Attacking,
+                crate::states::StateTransitionTrigger::HealthLow,
+            ),
+            crate::states::AIState::Defending,
         );
 
         let coordination = AICoordination {
@@ -422,12 +497,18 @@ pub mod presets {
 
         // Add economic-focused transitions
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Idle, crate::states::StateTransitionTrigger::ResourceFound),
-            crate::states::AIState::Gathering
+            (
+                crate::states::AIState::Idle,
+                crate::states::StateTransitionTrigger::ResourceFound,
+            ),
+            crate::states::AIState::Gathering,
         );
         state_machine.transition_rules.insert(
-            (crate::states::AIState::Gathering, crate::states::StateTransitionTrigger::ResourceGathered),
-            crate::states::AIState::Building
+            (
+                crate::states::AIState::Gathering,
+                crate::states::StateTransitionTrigger::ResourceGathered,
+            ),
+            crate::states::AIState::Building,
         );
 
         let coordination = AICoordination {

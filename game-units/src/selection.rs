@@ -1,8 +1,8 @@
+use crate::{Selectable, Selected, Unit};
 use bevy::prelude::*;
-use crate::{Unit, Selected, Selectable};
 use game_physics::{
-    MovementTarget, MovementPath, MovementController,
-    Velocity, MovementCommandEvent, MovementCommand
+    MovementCommand, MovementCommandEvent, MovementController, MovementPath, MovementTarget,
+    Velocity,
 };
 #[cfg(feature = "web")]
 use web_sys::console;
@@ -170,19 +170,30 @@ pub fn movement_command_system(
         }
 
         #[cfg(feature = "web")]
-        console::log_1(&format!(
-            "Move command issued for {} units to ({:.2}, {:.2}) in formation",
-            selection_state.selected_entities.len(),
-            target_pos.x,
-            target_pos.z
-        ).into());
+        console::log_1(
+            &format!(
+                "Move command issued for {} units to ({:.2}, {:.2}) in formation",
+                selection_state.selected_entities.len(),
+                target_pos.x,
+                target_pos.z
+            )
+            .into(),
+        );
     }
 }
 
 // Physics-based movement system using velocity for smooth unit movement
 pub fn enhanced_movement_system(
     time: Res<Time>,
-    mut unit_query: Query<(&mut Velocity, &Transform, &mut MovementController, &mut MovementPath), With<Unit>>,
+    mut unit_query: Query<
+        (
+            &mut Velocity,
+            &Transform,
+            &mut MovementController,
+            &mut MovementPath,
+        ),
+        With<Unit>,
+    >,
 ) {
     for (mut velocity, transform, mut controller, mut movement_path) in unit_query.iter_mut() {
         // Check if we have waypoints to follow
@@ -297,7 +308,9 @@ fn handle_unit_selection(
     let mut closest_distance = f32::MAX;
 
     for (entity, transform, selectable) in selectable_query.iter() {
-        let distance = transform.translation.distance(input_state.mouse_world_position);
+        let distance = transform
+            .translation
+            .distance(input_state.mouse_world_position);
         if distance <= selectable.selection_radius && distance < closest_distance {
             closest_distance = distance;
             closest_unit = Some(entity);

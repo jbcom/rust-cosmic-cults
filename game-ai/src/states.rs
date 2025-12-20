@@ -1,8 +1,8 @@
 // AI State Machine - Production-ready state management for AI entities
 use bevy::prelude::*;
-use std::collections::HashMap;
-use game_units::{Unit, Team, Leader};
 use game_physics::prelude::*;
+use game_units::{Leader, Team, Unit};
+use std::collections::HashMap;
 
 // Core AI state enum - defines all possible states an AI unit can be in
 #[derive(Component, Clone, Debug, PartialEq, Eq, Hash)]
@@ -78,37 +78,94 @@ impl Default for AIStateMachine {
 
         // Define default state transition rules
         // From Idle
-        rules.insert((AIState::Idle, StateTransitionTrigger::EnemyDetected), AIState::Attacking);
-        rules.insert((AIState::Idle, StateTransitionTrigger::OrderReceived), AIState::Following);
-        rules.insert((AIState::Idle, StateTransitionTrigger::ResourceFound), AIState::Gathering);
-        rules.insert((AIState::Idle, StateTransitionTrigger::TimerExpired), AIState::Patrolling);
+        rules.insert(
+            (AIState::Idle, StateTransitionTrigger::EnemyDetected),
+            AIState::Attacking,
+        );
+        rules.insert(
+            (AIState::Idle, StateTransitionTrigger::OrderReceived),
+            AIState::Following,
+        );
+        rules.insert(
+            (AIState::Idle, StateTransitionTrigger::ResourceFound),
+            AIState::Gathering,
+        );
+        rules.insert(
+            (AIState::Idle, StateTransitionTrigger::TimerExpired),
+            AIState::Patrolling,
+        );
 
         // From Patrolling
-        rules.insert((AIState::Patrolling, StateTransitionTrigger::EnemyDetected), AIState::Attacking);
-        rules.insert((AIState::Patrolling, StateTransitionTrigger::AlertRaised), AIState::Searching);
-        rules.insert((AIState::Patrolling, StateTransitionTrigger::OrderReceived), AIState::Following);
+        rules.insert(
+            (AIState::Patrolling, StateTransitionTrigger::EnemyDetected),
+            AIState::Attacking,
+        );
+        rules.insert(
+            (AIState::Patrolling, StateTransitionTrigger::AlertRaised),
+            AIState::Searching,
+        );
+        rules.insert(
+            (AIState::Patrolling, StateTransitionTrigger::OrderReceived),
+            AIState::Following,
+        );
 
         // From Attacking
-        rules.insert((AIState::Attacking, StateTransitionTrigger::HealthLow), AIState::Fleeing);
-        rules.insert((AIState::Attacking, StateTransitionTrigger::TargetDestroyed), AIState::Searching);
-        rules.insert((AIState::Attacking, StateTransitionTrigger::EnemyLost), AIState::Searching);
+        rules.insert(
+            (AIState::Attacking, StateTransitionTrigger::HealthLow),
+            AIState::Fleeing,
+        );
+        rules.insert(
+            (AIState::Attacking, StateTransitionTrigger::TargetDestroyed),
+            AIState::Searching,
+        );
+        rules.insert(
+            (AIState::Attacking, StateTransitionTrigger::EnemyLost),
+            AIState::Searching,
+        );
 
         // From Fleeing
-        rules.insert((AIState::Fleeing, StateTransitionTrigger::HealthRestored), AIState::Idle);
-        rules.insert((AIState::Fleeing, StateTransitionTrigger::EnemyDetected), AIState::Retreating);
+        rules.insert(
+            (AIState::Fleeing, StateTransitionTrigger::HealthRestored),
+            AIState::Idle,
+        );
+        rules.insert(
+            (AIState::Fleeing, StateTransitionTrigger::EnemyDetected),
+            AIState::Retreating,
+        );
 
         // From Following
-        rules.insert((AIState::Following, StateTransitionTrigger::EnemyDetected), AIState::Attacking);
-        rules.insert((AIState::Following, StateTransitionTrigger::OrderReceived), AIState::Idle);
+        rules.insert(
+            (AIState::Following, StateTransitionTrigger::EnemyDetected),
+            AIState::Attacking,
+        );
+        rules.insert(
+            (AIState::Following, StateTransitionTrigger::OrderReceived),
+            AIState::Idle,
+        );
 
         // From Gathering
-        rules.insert((AIState::Gathering, StateTransitionTrigger::ResourceGathered), AIState::Idle);
-        rules.insert((AIState::Gathering, StateTransitionTrigger::EnemyDetected), AIState::Defending);
+        rules.insert(
+            (AIState::Gathering, StateTransitionTrigger::ResourceGathered),
+            AIState::Idle,
+        );
+        rules.insert(
+            (AIState::Gathering, StateTransitionTrigger::EnemyDetected),
+            AIState::Defending,
+        );
 
         // From Searching
-        rules.insert((AIState::Searching, StateTransitionTrigger::EnemyDetected), AIState::Attacking);
-        rules.insert((AIState::Searching, StateTransitionTrigger::TimerExpired), AIState::Patrolling);
-        rules.insert((AIState::Searching, StateTransitionTrigger::AllClear), AIState::Idle);
+        rules.insert(
+            (AIState::Searching, StateTransitionTrigger::EnemyDetected),
+            AIState::Attacking,
+        );
+        rules.insert(
+            (AIState::Searching, StateTransitionTrigger::TimerExpired),
+            AIState::Patrolling,
+        );
+        rules.insert(
+            (AIState::Searching, StateTransitionTrigger::AllClear),
+            AIState::Idle,
+        );
 
         Self {
             current_state: AIState::Idle,
@@ -149,12 +206,12 @@ impl AIStateMachine {
                 if self.state_timer > 5.0 {
                     self.transition(StateTransitionTrigger::TimerExpired);
                 }
-            },
+            }
             AIState::Searching => {
                 if self.state_timer > 10.0 {
                     self.transition(StateTransitionTrigger::TimerExpired);
                 }
-            },
+            }
             _ => {}
         }
     }
@@ -179,7 +236,13 @@ impl AIStateMachine {
 
 // State execution system - handles behavior for each state
 pub fn state_execution_system(
-    mut query: Query<(Entity, &mut AIStateMachine, &Transform, Option<&Unit>, Option<&Team>)>,
+    mut query: Query<(
+        Entity,
+        &mut AIStateMachine,
+        &Transform,
+        Option<&Unit>,
+        Option<&Team>,
+    )>,
     mut movement_events: MessageWriter<MovementCommandEvent>,
     time: Res<Time>,
     mut commands: Commands,
@@ -192,25 +255,25 @@ pub fn state_execution_system(
         match state_machine.current_state {
             AIState::Idle => {
                 execute_idle_state(entity, &state_machine, transform, &mut commands);
-            },
+            }
             AIState::Patrolling => {
                 execute_patrol_state(entity, &mut state_machine, transform, &mut movement_events);
-            },
+            }
             AIState::Attacking => {
                 execute_attack_state(entity, &state_machine, transform, unit, &mut commands);
-            },
+            }
             AIState::Fleeing => {
                 execute_flee_state(entity, &state_machine, transform, &mut movement_events);
-            },
+            }
             AIState::Following => {
                 execute_follow_state(entity, &state_machine, &mut movement_events);
-            },
+            }
             AIState::Gathering => {
                 execute_gather_state(entity, &state_machine, transform, &mut commands);
-            },
+            }
             AIState::Searching => {
                 execute_search_state(entity, &mut state_machine, transform, &mut movement_events);
-            },
+            }
             _ => {}
         }
     }
@@ -272,10 +335,12 @@ fn execute_attack_state(
 ) {
     if let Some(target) = state_machine.state_data.target_entity {
         // Move towards target and attack
-        commands.entity(entity).insert(crate::systems::state_machine::AttackBehavior {
-            target: Some(target),
-            aggression_level: unit.map(|u| u.attack_damage / 10.0).unwrap_or(1.0),
-        });
+        commands
+            .entity(entity)
+            .insert(crate::systems::state_machine::AttackBehavior {
+                target: Some(target),
+                aggression_level: unit.map(|u| u.attack_damage / 10.0).unwrap_or(1.0),
+            });
     }
 }
 
@@ -326,10 +391,12 @@ fn execute_gather_state(
     commands: &mut Commands,
 ) {
     if let Some(resource) = state_machine.state_data.target_entity {
-        commands.entity(entity).insert(crate::systems::state_machine::GatheringBehavior {
-            target_resource: Some(resource),
-            gathering_rate: 1.0,
-        });
+        commands
+            .entity(entity)
+            .insert(crate::systems::state_machine::GatheringBehavior {
+                target_resource: Some(resource),
+                gathering_rate: 1.0,
+            });
     }
 }
 
@@ -340,17 +407,16 @@ fn execute_search_state(
     movement_events: &mut MessageWriter<MovementCommandEvent>,
 ) {
     // Search in expanding circles from last known enemy position
-    let search_center = state_machine.state_data.last_enemy_position
+    let search_center = state_machine
+        .state_data
+        .last_enemy_position
         .unwrap_or(transform.translation);
 
     let angle = state_machine.state_timer * 0.5;
     let radius = 5.0 + state_machine.state_timer * 2.0;
 
-    let search_position = search_center + Vec3::new(
-        angle.cos() * radius,
-        0.0,
-        angle.sin() * radius,
-    );
+    let search_position =
+        search_center + Vec3::new(angle.cos() * radius, 0.0, angle.sin() * radius);
 
     movement_events.write(MovementCommandEvent {
         entity,
@@ -363,7 +429,13 @@ fn execute_search_state(
 
 // System to trigger state transitions based on game events
 pub fn state_transition_system(
-    mut query: Query<(Entity, &mut AIStateMachine, &Transform, Option<&Unit>, Option<&Team>)>,
+    mut query: Query<(
+        Entity,
+        &mut AIStateMachine,
+        &Transform,
+        Option<&Unit>,
+        Option<&Team>,
+    )>,
     other_units_query: Query<(Entity, &Transform, &Team), Without<AIStateMachine>>,
     time: Res<Time>,
 ) {
@@ -403,9 +475,13 @@ pub fn state_transition_system(
 
         // Check health for flee trigger
         if let Some(unit) = unit {
-            if unit.health < unit.max_health * 0.3 && state_machine.current_state == AIState::Attacking {
+            if unit.health < unit.max_health * 0.3
+                && state_machine.current_state == AIState::Attacking
+            {
                 state_machine.transition(StateTransitionTrigger::HealthLow);
-            } else if unit.health > unit.max_health * 0.5 && state_machine.current_state == AIState::Fleeing {
+            } else if unit.health > unit.max_health * 0.5
+                && state_machine.current_state == AIState::Fleeing
+            {
                 state_machine.transition(StateTransitionTrigger::HealthRestored);
             }
         }
