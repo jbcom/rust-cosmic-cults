@@ -286,15 +286,28 @@ fn execute_idle_state(
     transform: &Transform,
     commands: &mut Commands,
 ) {
-    // Idle units occasionally look around
-    if state_machine.state_timer > 3.0 {
-        // Add a small random rotation to simulate looking around
-        let rotation = Quat::from_rotation_y(0.1);
-        commands.entity(entity).insert(Transform {
-            translation: transform.translation,
-            rotation: transform.rotation * rotation,
-            scale: transform.scale,
-        });
+    // Idle units occasionally look around - apply rotation once every 3 seconds
+    // by checking if the timer is within a small window after each 3-second interval
+    let look_interval = 3.0;
+    let timer = state_machine.state_timer;
+
+    // Check if we just crossed an interval boundary (within one frame's worth of time)
+    if timer > look_interval {
+        let intervals_passed = (timer / look_interval).floor();
+        let time_since_last_interval = timer - (intervals_passed * look_interval);
+
+        // Apply rotation only during the first frame after crossing an interval
+        // (checking if we're within 0.1 seconds of the interval boundary)
+        if time_since_last_interval < 0.1 {
+            // Vary the rotation based on the interval count to create different look directions
+            let rotation_amount = ((intervals_passed as i32 % 4) as f32 - 1.5) * 0.3;
+            let rotation = Quat::from_rotation_y(rotation_amount);
+            commands.entity(entity).insert(Transform {
+                translation: transform.translation,
+                rotation: transform.rotation * rotation,
+                scale: transform.scale,
+            });
+        }
     }
 }
 

@@ -199,11 +199,13 @@ pub fn squad_coordination_system(
             let formation_radius = 5.0;
             let angle_step = std::f32::consts::TAU / squad_members.len() as f32;
 
-            for (i, (mut controller, transform, team)) in follower_query.iter_mut().enumerate() {
+            // Use a separate index for squad members to calculate correct formation angles
+            let mut squad_member_index = 0;
+            for (mut controller, transform, team) in follower_query.iter_mut() {
                 if team.id == leader_team.id {
                     let distance = transform.translation.distance(leader_pos);
                     if distance < 15.0 && distance > 3.0 {
-                        let angle = i as f32 * angle_step;
+                        let angle = squad_member_index as f32 * angle_step;
                         let offset = Vec3::new(
                             angle.cos() * formation_radius,
                             0.0,
@@ -213,6 +215,7 @@ pub fn squad_coordination_system(
 
                         controller.target_position = Some(target_pos);
                         controller.is_moving = true;
+                        squad_member_index += 1;
                     }
                 }
             }
