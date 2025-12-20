@@ -118,16 +118,18 @@ impl DecisionMaker {
         Self::new(AIPersonality::default())
     }
 
-    pub fn update(&mut self, context: &DecisionContext) {
+    pub fn update(&mut self, context: &DecisionContext, closest_enemy: Option<Entity>) {
         // Evaluate available goals and their scores
         let mut goal_scores = Vec::new();
 
         // Score different goals based on context and personality
 
-        // Combat goals
+        // Combat goals - only add if we have an actual enemy target
         if context.nearby_enemies > 0 {
-            let attack_score = self.score_attack_goal(context);
-            goal_scores.push((StrategicGoal::EliminateEnemy(Entity::PLACEHOLDER), attack_score));
+            if let Some(enemy) = closest_enemy {
+                let attack_score = self.score_attack_goal(context);
+                goal_scores.push((StrategicGoal::EliminateEnemy(enemy), attack_score));
+            }
         }
 
         // Defense goals
@@ -368,22 +370,29 @@ pub fn decision_system(
             time_elapsed: current_time,
         };
 
-        // Count nearby units
+        // Count nearby units and find closest enemy
         let detection_range = 30.0;
-        for (enemy_entity, enemy_transform, enemy_team) in enemy_query.iter() {
-            let distance = transform.translation.distance(enemy_transform.translation);
+        let mut closest_enemy: Option<(Entity, f32)> = None;
+
+        for (other_entity, other_transform, other_team) in enemy_query.iter() {
+            let distance = transform.translation.distance(other_transform.translation);
             if distance <= detection_range {
-                if enemy_team.id != context.team_id {
+                if other_team.id != context.team_id {
                     context.nearby_enemies += 1;
                     context.threat_level += 1.0 / distance.max(1.0);
+
+                    // Track closest enemy
+                    if closest_enemy.is_none() || distance < closest_enemy.unwrap().1 {
+                        closest_enemy = Some((other_entity, distance));
+                    }
                 } else {
                     context.nearby_allies += 1;
                 }
             }
         }
 
-        // Update decision
-        decision_maker.update(&context);
+        // Update decision with closest enemy target
+        decision_maker.update(&context, closest_enemy.map(|(e, _)| e));
     }
 }
 

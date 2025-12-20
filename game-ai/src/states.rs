@@ -180,7 +180,7 @@ impl AIStateMachine {
 // State execution system - handles behavior for each state
 pub fn state_execution_system(
     mut query: Query<(Entity, &mut AIStateMachine, &Transform, Option<&Unit>, Option<&Team>)>,
-    mut movement_events: MessageWriter<MovementCommandEvent>,
+    mut movement_events: EventWriter<MovementCommandEvent>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
@@ -239,7 +239,7 @@ fn execute_patrol_state(
     entity: Entity,
     state_machine: &mut AIStateMachine,
     transform: &Transform,
-    movement_events: &mut MessageWriter<MovementCommandEvent>,
+    movement_events: &mut EventWriter<MovementCommandEvent>,
 ) {
     // Move to next patrol point
     if state_machine.state_data.target_position.is_none() {
@@ -283,7 +283,7 @@ fn execute_flee_state(
     entity: Entity,
     state_machine: &AIStateMachine,
     transform: &Transform,
-    movement_events: &mut MessageWriter<MovementCommandEvent>,
+    movement_events: &mut EventWriter<MovementCommandEvent>,
 ) {
     // Move away from danger towards home position
     let flee_direction = if let Some(enemy_pos) = state_machine.state_data.last_enemy_position {
@@ -306,7 +306,7 @@ fn execute_flee_state(
 fn execute_follow_state(
     entity: Entity,
     state_machine: &AIStateMachine,
-    movement_events: &mut MessageWriter<MovementCommandEvent>,
+    movement_events: &mut EventWriter<MovementCommandEvent>,
 ) {
     if let Some(target) = state_machine.state_data.target_entity {
         movement_events.write(MovementCommandEvent {
@@ -337,7 +337,7 @@ fn execute_search_state(
     entity: Entity,
     state_machine: &mut AIStateMachine,
     transform: &Transform,
-    movement_events: &mut MessageWriter<MovementCommandEvent>,
+    movement_events: &mut EventWriter<MovementCommandEvent>,
 ) {
     // Search in expanding circles from last known enemy position
     let search_center = state_machine.state_data.last_enemy_position
@@ -363,25 +363,32 @@ fn execute_search_state(
 
 // System to trigger state transitions based on game events
 pub fn state_transition_system(
-    mut query: Query<(Entity, &mut AIStateMachine, &Transform, Option<&Unit>)>,
-    enemy_query: Query<(Entity, &Transform, &Team), Without<AIStateMachine>>,
+    mut query: Query<(Entity, &mut AIStateMachine, &Transform, Option<&Unit>, Option<&Team>)>,
+    other_units_query: Query<(Entity, &Transform, &Team), Without<AIStateMachine>>,
     time: Res<Time>,
 ) {
-    for (entity, mut state_machine, transform, unit) in query.iter_mut() {
+    for (entity, mut state_machine, transform, unit, my_team) in query.iter_mut() {
         // Check for enemies in detection range
         let detection_range = 15.0;
         let mut enemy_detected = false;
         let mut closest_enemy: Option<(Entity, f32)> = None;
 
-        for (enemy_entity, enemy_transform, enemy_team) in enemy_query.iter() {
-            // Skip if same team (would need proper team checking)
-            let distance = transform.translation.distance(enemy_transform.translation);
+        // Get our team ID, default to 0 if no team component
+        let my_team_id = my_team.map(|t| t.id).unwrap_or(0);
+
+        for (other_entity, other_transform, other_team) in other_units_query.iter() {
+            // Skip if same team - proper team checking
+            if other_team.id == my_team_id {
+                continue;
+            }
+
+            let distance = transform.translation.distance(other_transform.translation);
 
             if distance < detection_range {
                 enemy_detected = true;
 
                 if closest_enemy.is_none() || distance < closest_enemy.unwrap().1 {
-                    closest_enemy = Some((enemy_entity, distance));
+                    closest_enemy = Some((other_entity, distance));
                 }
             }
         }
