@@ -155,7 +155,7 @@ impl UtilityAI {
             if !action.considerations.is_empty() {
                 let modification_factor = 1.0 - (1.0 / action.considerations.len() as f32);
                 let makeup_value = (1.0 - total_score) * modification_factor;
-                total_score = total_score + (makeup_value * total_score);
+                total_score = total_score + makeup_value;
             }
 
             scores.push(UtilityScore {
