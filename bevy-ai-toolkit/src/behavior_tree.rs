@@ -290,7 +290,7 @@ fn execute_action(action: &ActionNode, blackboard: &mut Blackboard) -> NodeStatu
 /// Check condition nodes (override this in your game for custom conditions)
 fn check_condition(condition: &ConditionNode, blackboard: &Blackboard) -> bool {
     match &condition.condition_type {
-        ConditionType::HasTarget => blackboard.get_float("target").is_some(),
+        ConditionType::HasTarget => blackboard.get_entity("attack_target").is_some(),
         ConditionType::HasResources => blackboard.get_float("resources").unwrap_or(0.0) > 100.0,
         ConditionType::IsHealthy => blackboard.get_float("health").unwrap_or(0.0) > 50.0,
         ConditionType::IsUnderAttack => blackboard.get_bool("under_attack").unwrap_or(false),
