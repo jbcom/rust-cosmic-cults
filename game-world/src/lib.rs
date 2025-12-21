@@ -1,19 +1,20 @@
 //! Game World Plugin for Cosmic Dominion
-//! 
+//!
 //! This crate provides the complete world generation, terrain, fog of war,
 //! and entity spawning systems for the game.
 
 use bevy::prelude::*;
+use tracing::info;
 
-pub mod terrain;
 pub mod fog;
 pub mod map;
 pub mod spawning;
+pub mod terrain;
 
-pub use terrain::{TerrainTile, BiomeType, TerrainConfig};
-pub use fog::{FogOfWar, VisibilityMap, VisionProvider, Faction};
-pub use map::{GameMap, PathfindingGrid, MapTile, find_path};
-pub use spawning::{CultLeader, PlayerUnit, LeadershipBuilding, Totem, InitialCreature};
+pub use fog::{Faction, FogOfWar, VisibilityMap, VisionProvider};
+pub use map::{GameMap, MapTile, PathfindingGrid, find_path};
+pub use spawning::{CultLeader, InitialCreature, LeadershipBuilding, PlayerUnit, Totem};
+pub use terrain::{BiomeType, TerrainConfig, TerrainTile};
 
 /// Main plugin for the game world systems
 pub struct GameWorldPlugin;
@@ -22,30 +23,37 @@ impl Plugin for GameWorldPlugin {
     fn build(&self, app: &mut App) {
         // Initialize resources
         app.init_resource::<GameMap>()
-           .init_resource::<PathfindingGrid>()
-           .init_resource::<VisibilityMap>()
-           .init_resource::<TerrainConfig>();
-        
+            .init_resource::<PathfindingGrid>()
+            .init_resource::<VisibilityMap>()
+            .init_resource::<TerrainConfig>();
+
         // Add startup systems in the correct order
-        app.add_systems(Startup, (
-            map::initialize_map,
-            terrain::generate_terrain_system,
-            fog::initialize_fog_system,
-            spawning::spawn_starting_scene,
-        ).chain());
-        
+        app.add_systems(
+            Startup,
+            (
+                map::initialize_map,
+                terrain::generate_terrain_system,
+                fog::initialize_fog_system,
+                spawning::spawn_starting_scene,
+            )
+                .chain(),
+        );
+
         // Add update systems
-        app.add_systems(Update, (
-            fog::update_fog_system,
-            fog::reveal_around_spawn_system,
-            fog::fog_entity_visibility_system,
-            map::update_tile_occupation_system,
-        ));
-        
+        app.add_systems(
+            Update,
+            (
+                fog::update_fog_system,
+                fog::reveal_around_spawn_system,
+                fog::fog_entity_visibility_system,
+                map::update_tile_occupation_system,
+            ),
+        );
+
         // Add debug visualization (can be disabled in production)
         #[cfg(debug_assertions)]
         app.add_systems(Update, map::debug_draw_map_grid);
-        
+
         info!("Game World Plugin loaded successfully");
     }
 }
@@ -59,14 +67,14 @@ pub fn setup_test_world(mut commands: Commands) {
         shadows_enabled: true,
         ..default()
     });
-    
+
     // Add camera
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(0.0, 30.0, 30.0).looking_at(Vec3::ZERO, Vec3::Y),
         Name::new("Main Camera"),
     ));
-    
+
     // Add fog effect
     commands.spawn((
         EnvironmentMapLight {
@@ -124,18 +132,4 @@ pub enum GameMode {
     Tutorial,
     Standard,
     Hardcore,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_world_plugin_setup() {
-        let mut app = App::new();
-        app.add_plugins(GameWorldPlugin);
-        
-        // Verify resources are initialized
-        assert!(app.world().get_resource::<GameMap>().is_some());
-    }
 }

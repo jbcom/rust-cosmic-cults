@@ -1,0 +1,13 @@
+[package]
+name = "game-runner"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { workspace = true }
+game-physics = { path = "../game-physics" }
+game-assets = { path = "../game-assets" }
+game-world = { path = "../game-world" }
+game-units = { path = "../game-units" }
+game-combat = { path = "../game-combat" }
+game-ai = { path = "../game-ai" }

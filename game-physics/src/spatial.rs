@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use ahash::HashMap;
+use bevy::prelude::*;
 use std::collections::HashSet;
 use wasm_bindgen::prelude::*;
 
@@ -34,7 +34,7 @@ impl SpatialGrid {
         let cell_x = (position.x / self.cell_size).floor() as i32;
         let cell_z = (position.z / self.cell_size).floor() as i32;
         let cell_coord = (cell_x, cell_z);
-        
+
         // Remove entity from old cell if it exists
         if let Some(old_coord) = self.entity_positions.get(&entity) {
             if let Some(old_cell) = self.cells.get_mut(old_coord) {
@@ -44,13 +44,10 @@ impl SpatialGrid {
                 }
             }
         }
-        
+
         // Insert into new cell
-        self.cells
-            .entry(cell_coord)
-            .or_insert_with(Vec::new)
-            .push(entity);
-        
+        self.cells.entry(cell_coord).or_default().push(entity);
+
         self.entity_positions.insert(entity, cell_coord);
     }
 
@@ -69,12 +66,12 @@ impl SpatialGrid {
     /// Query all entities within a radius of a position
     pub fn query_range(&self, position: Vec3, radius: f32) -> Vec<Entity> {
         let mut results = Vec::new();
-        
+
         let min_x = ((position.x - radius) / self.cell_size).floor() as i32;
         let max_x = ((position.x + radius) / self.cell_size).ceil() as i32;
         let min_z = ((position.z - radius) / self.cell_size).floor() as i32;
         let max_z = ((position.z + radius) / self.cell_size).ceil() as i32;
-        
+
         for x in min_x..=max_x {
             for z in min_z..=max_z {
                 if let Some(entities) = self.cells.get(&(x, z)) {
@@ -82,7 +79,7 @@ impl SpatialGrid {
                 }
             }
         }
-        
+
         results
     }
 
@@ -90,17 +87,13 @@ impl SpatialGrid {
     pub fn query_cell(&self, cell_x: i32, cell_z: i32) -> Vec<Entity> {
         self.cells
             .get(&(cell_x, cell_z))
-            .map(|entities| entities.clone())
+            .cloned()
             .unwrap_or_default()
     }
 
     /// Get all entities in the grid
     pub fn get_all_entities(&self) -> Vec<Entity> {
-        self.cells
-            .values()
-            .flatten()
-            .cloned()
-            .collect()
+        self.cells.values().flatten().cloned().collect()
     }
 
     /// Get the cell coordinate for a world position
@@ -177,10 +170,10 @@ impl WasmSpatialGrid {
     pub fn insert(&mut self, entity_id: u32, x: f32, z: f32) {
         let cell_x = (x / self.cell_size).floor() as i32;
         let cell_z = (z / self.cell_size).floor() as i32;
-        
+
         self.cells
             .entry((cell_x, cell_z))
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(entity_id);
     }
 
@@ -188,12 +181,12 @@ impl WasmSpatialGrid {
     #[wasm_bindgen]
     pub fn query_range(&self, x: f32, z: f32, radius: f32) -> Vec<u32> {
         let mut results = Vec::new();
-        
+
         let min_x = ((x - radius) / self.cell_size).floor() as i32;
         let max_x = ((x + radius) / self.cell_size).ceil() as i32;
         let min_z = ((z - radius) / self.cell_size).floor() as i32;
         let max_z = ((z + radius) / self.cell_size).ceil() as i32;
-        
+
         for cell_x in min_x..=max_x {
             for cell_z in min_z..=max_z {
                 if let Some(entities) = self.cells.get(&(cell_x, cell_z)) {
@@ -201,7 +194,7 @@ impl WasmSpatialGrid {
                 }
             }
         }
-        
+
         results
     }
 }
@@ -242,25 +235,19 @@ impl SpatialHash {
     fn hash_position(&self, x: f32, z: f32) -> i64 {
         let grid_x = (x / self.grid_size).floor() as i32;
         let grid_z = (z / self.grid_size).floor() as i32;
-        
+
         // Simple spatial hash using bit shifting
         ((grid_x as i64) << 32) | (grid_z as i64 & 0xFFFFFFFF)
     }
 
     pub fn insert(&mut self, entity: Entity, position: Vec3) {
         let key = self.hash_position(position.x, position.z);
-        self.hash_map
-            .entry(key)
-            .or_insert_with(Vec::new)
-            .push(entity);
+        self.hash_map.entry(key).or_default().push(entity);
     }
 
     pub fn query_cell(&self, position: Vec3) -> Vec<Entity> {
         let key = self.hash_position(position.x, position.z);
-        self.hash_map
-            .get(&key)
-            .map(|entities| entities.clone())
-            .unwrap_or_default()
+        self.hash_map.get(&key).cloned().unwrap_or_default()
     }
 
     pub fn clear(&mut self) {
@@ -286,7 +273,7 @@ impl BroadPhaseCollisionPairs {
         } else {
             (entity_b, entity_a)
         };
-        
+
         if !self.pairs.contains(&pair) {
             self.pairs.push(pair);
         }

@@ -1,8 +1,12 @@
 //! World entity spawning system for Cosmic Dominion
 
+use crate::fog::{Faction, VisionProvider};
+use bevy::asset::RenderAssetUsages;
+use bevy::mesh::Indices;
 use bevy::prelude::*;
-use game_assets::{models, Cult};
-use crate::fog::{VisionProvider, Faction};
+use bevy::render::render_resource::PrimitiveTopology;
+use game_assets::{Cult, models};
+use tracing::info;
 
 /// Marker component for the cult leader
 #[derive(Component)]
@@ -58,22 +62,54 @@ pub fn spawn_starting_scene(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     info!("Spawning starting scene for Cosmic Dominion");
-    
+
     // Spawn leadership building at center
-    spawn_leadership_building(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::ZERO, Cult::Crimson);
-    
+    spawn_leadership_building(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::ZERO,
+        Cult::Crimson,
+    );
+
     // Spawn cult leader on platform (slightly elevated and to the side)
-    spawn_cult_leader(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(5.0, 2.0, 0.0), Cult::Crimson);
-    
+    spawn_cult_leader(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(5.0, 2.0, 0.0),
+        Cult::Crimson,
+    );
+
     // Spawn player's starting unit (acolyte)
-    spawn_player_unit(&mut commands, &asset_server, Vec3::new(-5.0, 0.0, 0.0), UnitType::Acolyte);
-    
+    spawn_player_unit(
+        &mut commands,
+        &asset_server,
+        Vec3::new(-5.0, 0.0, 0.0),
+        UnitType::Acolyte,
+    );
+
     // Spawn initial creature
-    spawn_initial_creature(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, -8.0), CreatureType::CorruptedBeast);
-    
+    spawn_initial_creature(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(0.0, 0.0, -8.0),
+        CreatureType::CorruptedBeast,
+    );
+
     // Spawn ritual totem
-    spawn_totem(&mut commands, &asset_server, &mut meshes, &mut materials, Vec3::new(0.0, 0.0, 5.0));
-    
+    spawn_totem(
+        &mut commands,
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(0.0, 0.0, 5.0),
+    );
+
     // Spawn additional atmospheric elements
     spawn_cult_banners(&mut commands, &mut meshes, &mut materials, Cult::Crimson);
     spawn_ritual_circle(&mut commands, &mut meshes, &mut materials, Vec3::ZERO);
@@ -90,7 +126,7 @@ fn spawn_leadership_building(
 ) {
     // Try to load the temple GLB model
     let temple_model = asset_server.load(models::buildings::TEMPLE);
-    
+
     // Spawn the temple
     commands.spawn((
         SceneRoot(temple_model.clone()),
@@ -102,7 +138,7 @@ fn spawn_leadership_building(
         },
         Name::new("Leadership Building"),
     ));
-    
+
     // Add a glowing platform under the building
     let platform_mesh = meshes.add(Cylinder::new(8.0, 0.5));
     let platform_material = materials.add(StandardMaterial {
@@ -120,7 +156,7 @@ fn spawn_leadership_building(
         perceptual_roughness: 0.6,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(platform_mesh),
         MeshMaterial3d(platform_material),
@@ -155,7 +191,7 @@ fn spawn_cult_leader(
         perceptual_roughness: 0.3,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(leader_mesh),
         MeshMaterial3d(leader_material),
@@ -167,7 +203,7 @@ fn spawn_cult_leader(
         },
         Name::new("Cult Leader"),
     ));
-    
+
     // Add leader's aura effect
     let aura_mesh = meshes.add(Sphere::new(2.0));
     let aura_material = materials.add(StandardMaterial {
@@ -178,7 +214,7 @@ fn spawn_cult_leader(
         cull_mode: None,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(aura_mesh),
         MeshMaterial3d(aura_material),
@@ -201,7 +237,7 @@ fn spawn_player_unit(
         UnitType::DeepOne => asset_server.load(models::units::DEEP_ONE),
         UnitType::VoidWalker => asset_server.load(models::units::VOID_WALKER),
     };
-    
+
     commands.spawn((
         SceneRoot(unit_model),
         Transform::from_translation(position).with_scale(Vec3::splat(1.5)),
@@ -236,7 +272,7 @@ fn spawn_initial_creature(
         perceptual_roughness: 0.8,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(creature_mesh),
         MeshMaterial3d(creature_material),
@@ -256,14 +292,14 @@ fn spawn_totem(
 ) {
     // Try to load the obelisk model
     let obelisk_model = asset_server.load(models::terrain::LANDMARK_OBELISK);
-    
+
     commands.spawn((
         SceneRoot(obelisk_model),
         Transform::from_translation(position).with_scale(Vec3::splat(1.5)),
         Totem { power_level: 1.0 },
         Name::new("Ritual Totem"),
     ));
-    
+
     // Add glowing runes around the totem
     let rune_mesh = meshes.add(Torus::new(2.0, 0.1));
     let rune_material = materials.add(StandardMaterial {
@@ -271,7 +307,7 @@ fn spawn_totem(
         emissive: LinearRgba::from(Color::srgb(0.8, 0.0, 1.0)) * 0.5,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(rune_mesh),
         MeshMaterial3d(rune_material),
@@ -294,17 +330,17 @@ fn spawn_cult_banners(
         Vec3::new(10.0, 0.0, -10.0),
         Vec3::new(-10.0, 0.0, -10.0),
     ];
-    
+
     let banner_mesh = meshes.add(Cuboid::new(0.2, 4.0, 0.2));
     let flag_mesh = meshes.add(Plane3d::new(Vec3::Z, Vec2::new(1.5, 2.0)));
-    
+
     let pole_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.2, 0.15, 0.1),
         metallic: 0.3,
         perceptual_roughness: 0.7,
         ..default()
     });
-    
+
     let flag_material = materials.add(StandardMaterial {
         base_color: match cult {
             Cult::Crimson => Color::srgb(0.6, 0.0, 0.0),
@@ -315,7 +351,7 @@ fn spawn_cult_banners(
         cull_mode: None,
         ..default()
     });
-    
+
     for position in banner_positions.iter() {
         // Banner pole
         commands.spawn((
@@ -324,7 +360,7 @@ fn spawn_cult_banners(
             Transform::from_translation(*position + Vec3::Y * 2.0),
             Name::new("Banner Pole"),
         ));
-        
+
         // Banner flag
         commands.spawn((
             Mesh3d(flag_mesh.clone()),
@@ -345,7 +381,7 @@ fn spawn_ritual_circle(
 ) {
     // Create concentric circles for the ritual area
     let circle_radii = [3.0, 5.0, 7.0];
-    
+
     for (i, &radius) in circle_radii.iter().enumerate() {
         let circle_mesh = meshes.add(Torus::new(radius, 0.1));
         let circle_material = materials.add(StandardMaterial {
@@ -353,7 +389,7 @@ fn spawn_ritual_circle(
             emissive: LinearRgba::from(Color::srgb(0.6, 0.0, 0.6)) * (0.3 - i as f32 * 0.1),
             ..default()
         });
-        
+
         commands.spawn((
             Mesh3d(circle_mesh),
             MeshMaterial3d(circle_material),
@@ -362,7 +398,7 @@ fn spawn_ritual_circle(
             Name::new(format!("Ritual Circle {}", i + 1)),
         ));
     }
-    
+
     // Add pentagram or cult symbol in the center
     let symbol_mesh = meshes.add(create_cult_symbol_mesh());
     let symbol_material = materials.add(StandardMaterial {
@@ -370,7 +406,7 @@ fn spawn_ritual_circle(
         emissive: LinearRgba::from(Color::srgb(1.0, 0.0, 0.0)) * 0.5,
         ..default()
     });
-    
+
     commands.spawn((
         Mesh3d(symbol_mesh),
         MeshMaterial3d(symbol_material),
@@ -384,31 +420,39 @@ fn spawn_ritual_circle(
 fn create_cult_symbol_mesh() -> Mesh {
     let mut positions = Vec::new();
     let mut indices = Vec::new();
-    
+
     // Create a pentagram
     let points = 5;
     let outer_radius = 2.0;
     let inner_radius = 0.8;
-    
+
     // Center point
     positions.push([0.0, 0.0, 0.0]);
-    
+
     // Generate star points
     for i in 0..points * 2 {
-        let angle = (i as f32 / (points * 2) as f32) * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
-        let radius = if i % 2 == 0 { outer_radius } else { inner_radius };
-        
+        let angle =
+            (i as f32 / (points * 2) as f32) * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
+        let radius = if i % 2 == 0 {
+            outer_radius
+        } else {
+            inner_radius
+        };
+
         positions.push([angle.cos() * radius, 0.0, angle.sin() * radius]);
     }
-    
+
     // Create triangles
     for i in 0..points * 2 {
         indices.push(0);
         indices.push((i + 1) as u32);
         indices.push(((i + 1) % (points * 2) + 1) as u32);
     }
-    
-    Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList, bevy::asset::RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_indices(bevy::mesh::Indices::U32(indices))
+
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_indices(Indices::U32(indices))
 }

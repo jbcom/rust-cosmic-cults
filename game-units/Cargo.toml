@@ -1,0 +1,43 @@
+[package]
+name = "game-units"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Core Bevy engine with minimal features needed for unit systems
+bevy = { workspace = true, default-features = false, features = [
+    "bevy_asset",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_gizmos",
+    "bevy_pbr"
+]}
+
+# Game systems integration
+game-physics = { path = "../game-physics" }
+game-world = { path = "../game-world" }
+
+# Math and utilities
+glam = { workspace = true }
+ahash = { workspace = true }
+smallvec = { workspace = true }
+
+# Serialization for unit data persistence
+serde = { workspace = true }
+
+# Web support for logging (when compiled for wasm)
+web-sys = { workspace = true, features = ["console"], optional = true }
+
+# Randomization for unit variations
+rand = { workspace = true }
+
+[features]
+default = []
+web = ["web-sys"]

@@ -2,7 +2,10 @@
 name = "game-assets"
 version = "0.1.0"
 edition = "2024"
+authors = ["Jon Bogaty <jon@jonbogaty.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jbcom/rust-cosmic-cults"
 
 [dependencies]
-bevy = { workspace = true }
-serde = { workspace = true }
+bevy = { workspace = true, features = ["bevy_asset"] }
+serde = { workspace = true, features = ["derive"] }

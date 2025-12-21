@@ -1,8 +1,11 @@
 //! Production terrain generation and biome system for Cosmic Dominion
 
+use bevy::asset::RenderAssetUsages;
+use bevy::mesh::Indices;
 use bevy::prelude::*;
-use rand::{Rng, SeedableRng};
+use bevy::render::render_resource::PrimitiveTopology;
 use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
 
 /// Terrain tile component representing a single tile in the game world
@@ -38,7 +41,7 @@ impl BiomeType {
             BiomeType::NeutralGround => Color::srgb(0.3, 0.35, 0.3),  // Gray-green
         }
     }
-    
+
     /// Get the emissive color for this biome
     pub fn get_emissive_color(&self) -> Color {
         match self {
@@ -50,7 +53,7 @@ impl BiomeType {
             BiomeType::NeutralGround => Color::BLACK,
         }
     }
-    
+
     /// Get the height variation for this biome
     pub fn get_height_variation(&self) -> f32 {
         match self {
@@ -90,19 +93,19 @@ pub fn generate_terrain_system(
     terrain_config: Res<TerrainConfig>,
 ) {
     let mut rng = StdRng::seed_from_u64(terrain_config.seed);
-    
+
     // Generate a 3x3 starting area with surrounding terrain
     let _start_radius = 5; // 11x11 grid centered at origin
-    let fog_radius = 8;   // Additional fog tiles beyond visible area
-    
+    let fog_radius = 8; // Additional fog tiles beyond visible area
+
     // Track generated tiles for biome clustering
     let mut tile_biomes: HashMap<(i32, i32), BiomeType> = HashMap::new();
-    
+
     // First pass: assign biomes with clustering
     for x in -fog_radius..=fog_radius {
         for z in -fog_radius..=fog_radius {
             let distance_from_center = ((x * x + z * z) as f32).sqrt();
-            
+
             // Center area is always neutral ground for starting
             let biome = if distance_from_center < 2.0 {
                 BiomeType::NeutralGround
@@ -111,13 +114,15 @@ pub fn generate_terrain_system(
                 let mut neighbor_biomes = Vec::new();
                 for dx in -1..=1 {
                     for dz in -1..=1 {
-                        if dx == 0 && dz == 0 { continue; }
+                        if dx == 0 && dz == 0 {
+                            continue;
+                        }
                         if let Some(&neighbor_biome) = tile_biomes.get(&(x + dx, z + dz)) {
                             neighbor_biomes.push(neighbor_biome);
                         }
                     }
                 }
-                
+
                 // Weighted biome selection based on neighbors
                 if !neighbor_biomes.is_empty() && rng.random::<f32>() < 0.7 {
                     // 70% chance to match a neighbor for clustering
@@ -127,41 +132,42 @@ pub fn generate_terrain_system(
                     select_biome_by_distance(distance_from_center, &mut rng)
                 }
             };
-            
+
             tile_biomes.insert((x, z), biome);
         }
     }
-    
+
     // Second pass: create tiles with assigned biomes
     for x in -fog_radius..=fog_radius {
         for z in -fog_radius..=fog_radius {
             let biome = *tile_biomes.get(&(x, z)).unwrap();
             let distance_from_center = ((x * x + z * z) as f32).sqrt();
-            
+
             // Calculate corruption level based on distance and biome
-            let corruption_level = calculate_corruption_level(distance_from_center, biome, &mut rng);
-            
+            let corruption_level =
+                calculate_corruption_level(distance_from_center, biome, &mut rng);
+
             // Create tile mesh with height variation
             let height_variation = biome.get_height_variation();
             let tile_height = rng.random_range(-height_variation..height_variation);
-            
+
             let tile_mesh = meshes.add(create_tile_mesh(
                 terrain_config.tile_size,
                 tile_height,
                 corruption_level,
             ));
-            
+
             // Create material with biome-specific colors
             let base_color = biome.get_base_color();
             let emissive = biome.get_emissive_color();
-            
+
             // Add corruption effect to color
             let corrupted_color = Color::srgb(
                 base_color.to_srgba().red * (1.0 - corruption_level * 0.3),
                 base_color.to_srgba().green * (1.0 - corruption_level * 0.5),
                 base_color.to_srgba().blue * (1.0 - corruption_level * 0.2),
             );
-            
+
             let tile_material = materials.add(StandardMaterial {
                 base_color: corrupted_color,
                 emissive: LinearRgba::from(emissive) * corruption_level * 0.5,
@@ -169,10 +175,10 @@ pub fn generate_terrain_system(
                 perceptual_roughness: 0.9,
                 ..default()
             });
-            
+
             // Determine if tile is walkable
             let walkable = biome != BiomeType::VoidRift || corruption_level < 0.8;
-            
+
             // Spawn tile entity
             commands.spawn((
                 Mesh3d(tile_mesh),
@@ -190,7 +196,7 @@ pub fn generate_terrain_system(
                     corruption_level,
                 },
             ));
-            
+
             // Add decorative elements based on biome
             spawn_biome_decorations(
                 &mut commands,
@@ -244,71 +250,79 @@ fn calculate_corruption_level(distance: f32, biome: BiomeType, rng: &mut StdRng)
         BiomeType::Wasteland => 0.5,
         BiomeType::NeutralGround => 0.1,
     };
-    
+
     // Increase corruption with distance
     let distance_factor = (distance / 10.0).min(1.0);
     let noise = rng.random_range(-0.1..0.1);
-    
+
     (base_corruption + distance_factor * 0.2 + noise).clamp(0.0, 1.0)
 }
 
 /// Create a tile mesh with height variation and corruption effects
 fn create_tile_mesh(size: f32, height: f32, corruption_level: f32) -> Mesh {
     let half_size = size / 2.0;
-    
+
     // Add vertex displacement based on corruption
     let corruption_displacement = corruption_level * 0.5;
-    
+
     // Create a plane with subdivisions for more detail
     let subdivisions = 4;
     let step = size / subdivisions as f32;
-    
+
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
-    
+
     // Generate vertices
     for i in 0..=subdivisions {
         for j in 0..=subdivisions {
             let x = -half_size + i as f32 * step;
             let z = -half_size + j as f32 * step;
-            
+
             // Add some noise to height for variation
-            let local_height = height + (corruption_level * (x * 0.1).sin() * (z * 0.1).cos() * corruption_displacement);
-            
+            let local_height = height
+                + (corruption_level * (x * 0.1).sin() * (z * 0.1).cos() * corruption_displacement);
+
             positions.push([x, local_height, z]);
             normals.push([0.0, 1.0, 0.0]);
-            uvs.push([i as f32 / subdivisions as f32, j as f32 / subdivisions as f32]);
+            uvs.push([
+                i as f32 / subdivisions as f32,
+                j as f32 / subdivisions as f32,
+            ]);
         }
     }
-    
+
     // Generate indices
     for i in 0..subdivisions {
         for j in 0..subdivisions {
             let idx = i * (subdivisions + 1) + j;
             let idx_next_row = (i + 1) * (subdivisions + 1) + j;
-            
+
             // First triangle
             indices.push(idx as u32);
             indices.push(idx_next_row as u32);
             indices.push((idx + 1) as u32);
-            
+
             // Second triangle
             indices.push((idx + 1) as u32);
             indices.push(idx_next_row as u32);
             indices.push((idx_next_row + 1) as u32);
         }
     }
-    
-    Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList, bevy::asset::RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
-        .with_inserted_indices(bevy::mesh::Indices::U32(indices))
+
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 /// Spawn decorative elements for biomes
+#[allow(clippy::too_many_arguments)]
 fn spawn_biome_decorations(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -329,14 +343,14 @@ fn spawn_biome_decorations(
         BiomeType::Wasteland => 0.05,
         BiomeType::NeutralGround => 0.02,
     };
-    
+
     if rng.random::<f32>() > spawn_chance {
         return;
     }
-    
+
     let world_x = tile_x as f32 * tile_size;
     let world_z = tile_z as f32 * tile_size;
-    
+
     match biome {
         BiomeType::CorruptedForest => {
             // Spawn twisted trees or corrupted crystals
@@ -348,7 +362,7 @@ fn spawn_biome_decorations(
                 perceptual_roughness: 0.4,
                 ..default()
             });
-            
+
             commands.spawn((
                 Mesh3d(crystal_mesh),
                 MeshMaterial3d(crystal_material),
@@ -356,7 +370,8 @@ fn spawn_biome_decorations(
                     world_x + rng.random_range(-tile_size * 0.3..tile_size * 0.3),
                     rng.random_range(0.5..2.0),
                     world_z + rng.random_range(-tile_size * 0.3..tile_size * 0.3),
-                ).with_scale(Vec3::splat(rng.random_range(0.5..1.5))),
+                )
+                .with_scale(Vec3::splat(rng.random_range(0.5..1.5))),
             ));
         }
         BiomeType::VoidRift => {
@@ -369,7 +384,7 @@ fn spawn_biome_decorations(
                 perceptual_roughness: 0.2,
                 ..default()
             });
-            
+
             commands.spawn((
                 Mesh3d(pillar_mesh),
                 MeshMaterial3d(pillar_material),
@@ -391,15 +406,11 @@ fn spawn_biome_decorations(
                 alpha_mode: AlphaMode::Blend,
                 ..default()
             });
-            
+
             commands.spawn((
                 Mesh3d(pool_mesh),
                 MeshMaterial3d(pool_material),
-                Transform::from_xyz(
-                    world_x,
-                    -0.3,
-                    world_z,
-                ).with_scale(Vec3::new(1.0, 0.2, 1.0)),
+                Transform::from_xyz(world_x, -0.3, world_z).with_scale(Vec3::new(1.0, 0.2, 1.0)),
             ));
         }
         _ => {}
@@ -411,48 +422,51 @@ fn create_crystal_mesh(rng: &mut StdRng) -> Mesh {
     let height = rng.random_range(2.0..4.0);
     let radius = rng.random_range(0.3..0.6);
     let sides = 6;
-    
+
     let mut positions = Vec::new();
     let mut normals = Vec::new();
     let mut indices = Vec::new();
-    
+
     // Bottom center vertex
     positions.push([0.0, 0.0, 0.0]);
     normals.push([0.0, -1.0, 0.0]);
-    
+
     // Top vertex
     positions.push([0.0, height, 0.0]);
     normals.push([0.0, 1.0, 0.0]);
-    
+
     // Side vertices
     for i in 0..sides {
         let angle = (i as f32 / sides as f32) * std::f32::consts::TAU;
         let x = angle.cos() * radius;
         let z = angle.sin() * radius;
-        
+
         positions.push([x, height * 0.3, z]);
         normals.push([x / radius, 0.0, z / radius]);
     }
-    
+
     // Create faces
     for i in 0..sides {
         let next = (i + 1) % sides;
-        
+
         // Bottom face
         indices.push(0);
         indices.push(2 + i as u32);
         indices.push(2 + next as u32);
-        
+
         // Top face
         indices.push(1);
         indices.push(2 + next as u32);
         indices.push(2 + i as u32);
     }
-    
-    Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList, bevy::asset::RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(bevy::mesh::Indices::U32(indices))
+
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 /// Create a void pillar mesh
