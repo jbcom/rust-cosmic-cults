@@ -61,10 +61,11 @@ impl Plugin for GameAIPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add AI events
-            .add_message::<AIMessage>()
-            .add_message::<PsychologicalEvent>()
-            .add_message::<crate::systems::AICommandEvent>()
-            .add_message::<crate::systems::AIPerceptionEvent>()
+            .add_event::<AIMessage>()
+            .add_event::<PsychologicalEvent>()
+            .add_event::<crate::systems::AICommandEvent>()
+            .add_event::<crate::systems::AIPerceptionEvent>()
+
             // Add resources
             .insert_resource(crate::systems::AIGlobalState::default())
             // Configure SystemSets for AI ordering
