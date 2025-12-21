@@ -13,4 +13,3 @@ remove_nested_parens = true
 merge_derives = true
 use_try_shorthand = true
 use_field_init_shorthand = true
-

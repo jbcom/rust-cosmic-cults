@@ -42,7 +42,7 @@ impl UserStore {
     pub fn new(connection: DbConnection) -> Self {
         Self { connection }
     }
-    
+
     pub fn get_user(&self, id: UserId) -> Result<User, Error> {
         // ...
     }
@@ -63,7 +63,7 @@ pub fn process(input: &str) -> Result<Output, ProcessError> {
 pub enum ProcessError {
     #[error("failed to parse input: {0}")]
     Parse(#[from] ParseError),
-    
+
     #[error("validation failed: {reason}")]
     Validation { reason: String },
 }
@@ -98,13 +98,13 @@ pub use processor::{Processor, ProcessorBuilder};
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_process_valid_input() {
         let result = process("valid").unwrap();
         assert_eq!(result.status, Status::Success);
     }
-    
+
     #[test]
     fn test_process_invalid_input() {
         let result = process("invalid");

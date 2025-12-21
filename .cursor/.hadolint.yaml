@@ -28,4 +28,4 @@ trustedRegistries:
 strictlabels: false  # Allow flexible labeling
 
 # Custom rules for development containers
-inline-threshold: info 
+inline-threshold: info

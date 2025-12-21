@@ -10,7 +10,7 @@ Lovecraftian 3D RTS built with Rust (Bevy 0.16+ + Yew) compiled to WASM. Uses vi
 ## Memory Bank Integration
 **CRITICAL**: Always read Memory Bank files at session start:
 1. `memory-bank/projectbrief.md` - Core project vision
-2. `memory-bank/activeContext.md` - Current development focus  
+2. `memory-bank/activeContext.md` - Current development focus
 3. `memory-bank/systemPatterns.md` - Architecture decisions
 4. `memory-bank/techContext.md` - Technology choices
 5. `memory-bank/progress.md` - Implementation status

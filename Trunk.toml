@@ -16,7 +16,3 @@ ignore = ["target", "dist"]
 address = "0.0.0.0"
 port = 8080
 open = false
-
-# WASM optimization settings
-[build.target]
-wasm-opt = ["-O3", "--enable-reference-types"]
