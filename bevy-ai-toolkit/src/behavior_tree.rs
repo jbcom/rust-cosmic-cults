@@ -273,7 +273,7 @@ fn execute_action(action: &ActionNode, blackboard: &mut Blackboard) -> NodeStatu
             }
         }
         ActionType::Attack => {
-            if blackboard.get_float("attack_target").is_some() {
+            if blackboard.get_entity("attack_target").is_some() {
                 NodeStatus::Running
             } else {
                 NodeStatus::Failure
