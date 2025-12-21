@@ -5,6 +5,7 @@
 
 use bevy::prelude::*;
 use game_physics::prelude::*;
+use rand::random;
 
 fn main() {
     App::new()
@@ -50,8 +51,8 @@ fn setup(mut commands: Commands) {
 
 fn keyboard_input(mut commands: Commands, keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Space) {
-        let x = (rand::random::<f32>() - 0.5) * 10.0;
-        let z = (rand::random::<f32>() - 0.5) * 10.0;
+        let x = (random::<f32>() - 0.5) * 10.0;
+        let z = (random::<f32>() - 0.5) * 10.0;
         create_physics_entity(&mut commands, Vec3::new(x, 10.0, z), Vec3::ZERO, 1.0);
         info!("Spawned new physics entity!");
     }

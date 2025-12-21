@@ -31,20 +31,16 @@ jobs:
             cache: true
           - name: Check
             run: cargo check --all-targets --all-features
-            components: ""
             cache: true
           - name: Test
             run: cargo test --all-features
-            components: ""
             cache: true
           - name: Doc
             run: cargo doc --no-deps --all-features
-            components: ""
             cache: true
             rustdocflags: -D warnings
           - name: WASM
             run: cargo check --target wasm32-unknown-unknown --all-features
-            components: ""
             cache: true
             targets: wasm32-unknown-unknown
     steps:
@@ -54,8 +50,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: ${{ matrix.job.components }}
-          targets: ${{ matrix.job.targets }}
+          components: ${{ matrix.job.components || '' }}
+          targets: ${{ matrix.job.targets || '' }}
 
       - name: Cache
         if: matrix.job.cache
@@ -64,4 +60,4 @@ jobs:
       - name: ${{ matrix.job.name }}
         run: ${{ matrix.job.run }}
         env:
-          RUSTDOCFLAGS: ${{ matrix.job.rustdocflags }}
+          RUSTDOCFLAGS: ${{ matrix.job.rustdocflags || '' }}

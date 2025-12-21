@@ -65,7 +65,7 @@ cargo doc --no-deps --all-features --open
 
 ### Running Examples
 
-See [examples/README.md](examples/README.md) for detailed information.
+See [game-runner/examples/README.md](game-runner/examples/README.md) for detailed information.
 
 ```bash
 # Run a native example
@@ -126,8 +126,10 @@ All code is automatically checked by CI on every push and pull request:
 ## Documentation
 
 - [Online Documentation](https://jbcom.github.io/rust-cosmic-cults/)
-- [Examples](examples/README.md)
-- [Architecture Docs](docs/)
+- [Rust Standards](RUST_STANDARDS.md) - Development standards and tooling
+- [WASM Demo](WASM_DEMO.md) - WebAssembly build and deployment
+- [Examples](game-runner/examples/README.md) - Runnable examples
+- [Architecture Docs](docs/) - Detailed architecture documentation
 
 ## License
 
