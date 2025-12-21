@@ -1,9 +1,9 @@
 // Main combat systems that orchestrate the combat flow
-use bevy::prelude::*;
 use crate::components::*;
+use crate::damage::*;
 use crate::states::*;
 use crate::targeting::*;
-use crate::damage::*;
+use bevy::prelude::*;
 
 /// Main combat execution system
 pub fn combat_execution_system(
@@ -21,35 +21,35 @@ pub fn combat_execution_system(
 ) {
     for (entity, state, targeting, stats, mut cooldown, transform) in query.iter_mut() {
         // Only attack if we're in the attacking state
-        if let CombatState::Attacking(_target) = state {
-            if cooldown.tick(time.delta_secs()) {
-                // Check if target is still valid and in range
-                if let Some(current_target) = targeting.current_target {
-                    if let Ok(target_transform) = target_query.get(current_target) {
-                        let distance = transform.translation.distance(target_transform.translation);
+        if let CombatState::Attacking(_target) = state
+            && cooldown.tick(time.delta_secs())
+        {
+            // Check if target is still valid and in range
+            if let Some(current_target) = targeting.current_target
+                && let Ok(target_transform) = target_query.get(current_target)
+            {
+                let distance = transform.translation.distance(target_transform.translation);
 
-                        if distance <= targeting.range {
-                            // Calculate damage
-                            let is_critical = rand::random::<f32>() < stats.critical_chance;
-                            let damage = if is_critical {
-                                stats.damage * stats.critical_damage
-                            } else {
-                                stats.damage
-                            };
+                if distance <= targeting.range {
+                    // Calculate damage
+                    let is_critical = rand::random::<f32>() < stats.critical_chance;
+                    let damage = if is_critical {
+                        stats.damage * stats.critical_damage
+                    } else {
+                        stats.damage
+                    };
 
-                            // Send damage event
-                            damage_events.write(DamageEvent {
-                                attacker: entity,
-                                target: current_target,
-                                amount: damage,
-                                damage_type: DamageType::Physical,
-                                is_critical,
-                            });
+                    // Send damage event
+                    damage_events.write(DamageEvent {
+                        attacker: entity,
+                        target: current_target,
+                        amount: damage,
+                        damage_type: DamageType::Physical,
+                        is_critical,
+                    });
 
-                            // Reset cooldown
-                            cooldown.reset(stats.attack_speed);
-                        }
-                    }
+                    // Reset cooldown
+                    cooldown.reset(stats.attack_speed);
                 }
             }
         }
@@ -57,10 +57,7 @@ pub fn combat_execution_system(
 }
 
 /// System to update attack timers
-pub fn update_attack_timers(
-    mut query: Query<&mut AttackTimer>,
-    time: Res<Time>,
-) {
+pub fn update_attack_timers(mut query: Query<&mut AttackTimer>, time: Res<Time>) {
     for mut timer in query.iter_mut() {
         timer.tick(time.delta());
     }
@@ -82,16 +79,13 @@ pub fn status_effect_system(
 }
 
 /// System to handle shield regeneration
-pub fn shield_regeneration_system(
-    mut query: Query<&mut Shield>,
-    time: Res<Time>,
-) {
+pub fn shield_regeneration_system(mut query: Query<&mut Shield>, time: Res<Time>) {
     for mut shield in query.iter_mut() {
         shield.time_since_damage += time.delta_secs();
 
         if shield.time_since_damage >= shield.regeneration_delay {
-            shield.current = (shield.current + shield.regeneration_rate * time.delta_secs())
-                .min(shield.maximum);
+            shield.current =
+                (shield.current + shield.regeneration_rate * time.delta_secs()).min(shield.maximum);
         }
     }
 }
@@ -118,10 +112,10 @@ pub fn combat_log_system(
 
     // Update kills
     for event in death_events.read() {
-        if let Some(killer) = event.killer {
-            if let Ok(mut log) = query.get_mut(killer) {
-                log.kills += 1;
-            }
+        if let Some(killer) = event.killer
+            && let Ok(mut log) = query.get_mut(killer)
+        {
+            log.kills += 1;
         }
     }
 }
@@ -146,7 +140,8 @@ pub fn projectile_system(
         for (target_entity, target_transform) in target_query.iter() {
             let distance = transform.translation.distance(target_transform.translation);
 
-            if distance < 1.0 {  // Hit detection radius
+            if distance < 1.0 {
+                // Hit detection radius
                 damage_events.write(DamageEvent {
                     attacker: projectile.owner,
                     target: target_entity,

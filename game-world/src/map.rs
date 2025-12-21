@@ -1,8 +1,8 @@
 //! Map management and grid system for Cosmic Dominion
 
 use bevy::prelude::*;
-use tracing::info;
 use std::collections::HashMap;
+use tracing::info;
 
 /// Resource representing the game map
 #[derive(Resource)]
@@ -55,28 +55,22 @@ pub struct MapTile {
 }
 
 /// Resource for pathfinding and movement
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct PathfindingGrid {
     pub walkable: HashMap<(i32, i32), bool>,
     pub movement_costs: HashMap<(i32, i32), f32>,
 }
 
-impl Default for PathfindingGrid {
-    fn default() -> Self {
-        Self {
-            walkable: HashMap::new(),
-            movement_costs: HashMap::new(),
-        }
-    }
-}
-
 /// Initialize the game map
 pub fn initialize_map(
-    mut commands: Commands,
+    _commands: Commands,
     mut game_map: ResMut<GameMap>,
     mut pathfinding_grid: ResMut<PathfindingGrid>,
 ) {
-    info!("Initializing game map with {}x{} tiles", game_map.width, game_map.height);
+    info!(
+        "Initializing game map with {}x{} tiles",
+        game_map.width, game_map.height
+    );
 
     let half_width = game_map.width / 2;
     let half_height = game_map.height / 2;
@@ -109,7 +103,9 @@ pub fn initialize_map(
 
             game_map.tiles.insert((x, z), tile_info);
             pathfinding_grid.walkable.insert((x, z), walkable);
-            pathfinding_grid.movement_costs.insert((x, z), movement_cost);
+            pathfinding_grid
+                .movement_costs
+                .insert((x, z), movement_cost);
         }
     }
 
@@ -222,8 +218,8 @@ pub fn find_path(
     goal: (i32, i32),
     pathfinding_grid: &PathfindingGrid,
 ) -> Option<Vec<(i32, i32)>> {
-    use std::collections::{BinaryHeap, HashSet};
     use std::cmp::Ordering;
+    use std::collections::{BinaryHeap, HashSet};
 
     #[derive(Clone, Eq, PartialEq)]
     struct Node {
@@ -283,16 +279,35 @@ pub fn find_path(
         closed_set.insert(current.position);
 
         // Check neighbors
-        for &(dx, dz) in &[(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, 1), (1, -1), (-1, -1)] {
+        for &(dx, dz) in &[
+            (0, 1),
+            (1, 0),
+            (0, -1),
+            (-1, 0),
+            (1, 1),
+            (-1, 1),
+            (1, -1),
+            (-1, -1),
+        ] {
             let neighbor = (current.position.0 + dx, current.position.1 + dz);
 
             // Check if walkable
-            if !pathfinding_grid.walkable.get(&neighbor).copied().unwrap_or(false) {
+            if !pathfinding_grid
+                .walkable
+                .get(&neighbor)
+                .copied()
+                .unwrap_or(false)
+            {
                 continue;
             }
 
-            let tentative_g_score = g_score[&current.position] +
-                (pathfinding_grid.movement_costs.get(&neighbor).copied().unwrap_or(999.0) * 100.0) as i32;
+            let tentative_g_score = g_score[&current.position]
+                + (pathfinding_grid
+                    .movement_costs
+                    .get(&neighbor)
+                    .copied()
+                    .unwrap_or(999.0)
+                    * 100.0) as i32;
 
             if tentative_g_score < *g_score.get(&neighbor).unwrap_or(&i32::MAX) {
                 came_from.insert(neighbor, current.position);
@@ -316,10 +331,7 @@ fn manhattan_distance(a: (i32, i32), b: (i32, i32)) -> i32 {
 }
 
 /// Debug system to visualize the map grid
-pub fn debug_draw_map_grid(
-    game_map: Res<GameMap>,
-    mut gizmos: Gizmos,
-) {
+pub fn debug_draw_map_grid(game_map: Res<GameMap>, mut gizmos: Gizmos) {
     let half_width = game_map.width / 2;
     let half_height = game_map.height / 2;
 
@@ -337,6 +349,14 @@ pub fn debug_draw_map_grid(
     }
 
     // Highlight starting position
-    let start_pos = grid_to_world(game_map.starting_position.0, game_map.starting_position.1, game_map.tile_size);
-    gizmos.circle(start_pos + Vec3::Y * 0.1, game_map.tile_size * 0.4, Color::srgb(0.0, 1.0, 0.0));
+    let start_pos = grid_to_world(
+        game_map.starting_position.0,
+        game_map.starting_position.1,
+        game_map.tile_size,
+    );
+    gizmos.circle(
+        start_pos + Vec3::Y * 0.1,
+        game_map.tile_size * 0.4,
+        Color::srgb(0.0, 1.0, 0.0),
+    );
 }

@@ -1,6 +1,6 @@
 // Decision Making System - Strategic decision making for AI entities
 use bevy::prelude::*;
-use game_units::{Unit, Team};
+use game_units::{Team, Unit};
 use std::collections::VecDeque;
 
 // Decision maker component for strategic AI decisions
@@ -17,11 +17,11 @@ pub struct DecisionMaker {
 // AI personality affects decision weights
 #[derive(Clone, Debug)]
 pub struct AIPersonality {
-    pub aggression: f32,      // 0.0 = peaceful, 1.0 = very aggressive
-    pub caution: f32,         // 0.0 = reckless, 1.0 = very cautious
-    pub greed: f32,           // 0.0 = content, 1.0 = resource hungry
-    pub loyalty: f32,         // 0.0 = independent, 1.0 = follows orders
-    pub exploration: f32,     // 0.0 = stays home, 1.0 = explores map
+    pub aggression: f32,  // 0.0 = peaceful, 1.0 = very aggressive
+    pub caution: f32,     // 0.0 = reckless, 1.0 = very cautious
+    pub greed: f32,       // 0.0 = content, 1.0 = resource hungry
+    pub loyalty: f32,     // 0.0 = independent, 1.0 = follows orders
+    pub exploration: f32, // 0.0 = stays home, 1.0 = explores map
 }
 
 impl Default for AIPersonality {
@@ -127,13 +127,19 @@ impl DecisionMaker {
         // Combat goals
         if context.nearby_enemies > 0 {
             let attack_score = self.score_attack_goal(context);
-            goal_scores.push((StrategicGoal::EliminateEnemy(Entity::PLACEHOLDER), attack_score));
+            goal_scores.push((
+                StrategicGoal::EliminateEnemy(Entity::PLACEHOLDER),
+                attack_score,
+            ));
         }
 
         // Defense goals
         if context.threat_level > 0.5 {
             let defend_score = self.score_defend_goal(context);
-            goal_scores.push((StrategicGoal::DefendPosition(context.position), defend_score));
+            goal_scores.push((
+                StrategicGoal::DefendPosition(context.position),
+                defend_score,
+            ));
         }
 
         // Economic goals
@@ -145,7 +151,10 @@ impl DecisionMaker {
         // Exploration goals
         if context.nearby_enemies == 0 && context.threat_level < 0.2 {
             let explore_score = self.score_exploration_goal(context);
-            goal_scores.push((StrategicGoal::ExploreTerrain(Vec3::new(50.0, 0.0, 50.0)), explore_score));
+            goal_scores.push((
+                StrategicGoal::ExploreTerrain(Vec3::new(50.0, 0.0, 50.0)),
+                explore_score,
+            ));
         }
 
         // Sort goals by score
@@ -153,22 +162,23 @@ impl DecisionMaker {
 
         // Select best goal
         if let Some((goal, score)) = goal_scores.first()
-            && score > &0.5 {
-                self.current_goal = Some(goal.clone());
+            && score > &0.5
+        {
+            self.current_goal = Some(goal.clone());
 
-                // Record decision
-                self.decision_history.push(Decision {
-                    goal: goal.clone(),
-                    score: *score,
-                    timestamp: context.time_elapsed,
-                    success: false, // Will be updated when goal completes
-                });
+            // Record decision
+            self.decision_history.push(Decision {
+                goal: goal.clone(),
+                score: *score,
+                timestamp: context.time_elapsed,
+                success: false, // Will be updated when goal completes
+            });
 
-                // Limit history size
-                if self.decision_history.len() > 20 {
-                    self.decision_history.remove(0);
-                }
+            // Limit history size
+            if self.decision_history.len() > 20 {
+                self.decision_history.remove(0);
             }
+        }
     }
 
     fn score_attack_goal(&self, context: &DecisionContext) -> f32 {
@@ -269,21 +279,11 @@ impl UtilityScorer {
         personality: &AIPersonality,
     ) -> f32 {
         match action {
-            ActionOption::Attack(target) => {
-                Self::score_attack(context, personality)
-            },
-            ActionOption::Defend(position) => {
-                Self::score_defend(context, personality)
-            },
-            ActionOption::Gather => {
-                Self::score_gather(context, personality)
-            },
-            ActionOption::Explore => {
-                Self::score_explore(context, personality)
-            },
-            ActionOption::Retreat => {
-                Self::score_retreat(context, personality)
-            },
+            ActionOption::Attack(target) => Self::score_attack(context, personality),
+            ActionOption::Defend(position) => Self::score_defend(context, personality),
+            ActionOption::Gather => Self::score_gather(context, personality),
+            ActionOption::Explore => Self::score_explore(context, personality),
+            ActionOption::Retreat => Self::score_retreat(context, personality),
         }
     }
 
@@ -339,8 +339,15 @@ pub enum ActionOption {
 }
 
 // Decision making system
+#[allow(clippy::type_complexity)]
 pub fn decision_system(
-    mut query: Query<(Entity, &mut DecisionMaker, &Transform, Option<&Unit>, Option<&Team>)>,
+    mut query: Query<(
+        Entity,
+        &mut DecisionMaker,
+        &Transform,
+        Option<&Unit>,
+        Option<&Team>,
+    )>,
     enemy_query: Query<(Entity, &Transform, &Team)>,
     time: Res<Time>,
 ) {
@@ -395,25 +402,31 @@ pub fn goal_execution_system(
         if let Some(ref goal) = decision_maker.current_goal {
             match goal {
                 StrategicGoal::EliminateEnemy(target) => {
-                    commands.entity(entity).insert(crate::systems::state_machine::AttackBehavior {
-                        target: Some(*target),
-                        aggression_level: decision_maker.personality.aggression,
-                    });
-                },
+                    commands
+                        .entity(entity)
+                        .insert(crate::systems::state_machine::AttackBehavior {
+                            target: Some(*target),
+                            aggression_level: decision_maker.personality.aggression,
+                        });
+                }
 
                 StrategicGoal::DefendPosition(position) => {
-                    commands.entity(entity).insert(crate::systems::state_machine::DefendBehavior {
-                        defend_position: *position,
-                        patrol_radius: 10.0,
-                    });
-                },
+                    commands
+                        .entity(entity)
+                        .insert(crate::systems::state_machine::DefendBehavior {
+                            defend_position: *position,
+                            patrol_radius: 10.0,
+                        });
+                }
 
                 StrategicGoal::GatherResources => {
-                    commands.entity(entity).insert(crate::systems::state_machine::GatheringBehavior {
-                        target_resource: None,
-                        gathering_rate: 1.0,
-                    });
-                },
+                    commands.entity(entity).insert(
+                        crate::systems::state_machine::GatheringBehavior {
+                            target_resource: None,
+                            gathering_rate: 1.0,
+                        },
+                    );
+                }
 
                 StrategicGoal::ExploreTerrain(target) => {
                     commands.entity(entity).insert(game_units::MovementTarget {
@@ -423,9 +436,9 @@ pub fn goal_execution_system(
                         reached: false,
                         speed: 4.0,
                     });
-                },
+                }
 
-                _ => {},
+                _ => {}
             }
         }
     }

@@ -1,7 +1,9 @@
 // Cult-specific AI profiles and behaviors
-use bevy::prelude::*;
-use crate::systems::{UtilityAI, Consideration, UtilityAction, ResponseCurve, InputType, UtilityActionType};
+use crate::systems::{
+    Consideration, InputType, ResponseCurve, UtilityAI, UtilityAction, UtilityActionType,
+};
 use crate::types::{AICoordination, AIRole};
+use bevy::prelude::*;
 use std::collections::HashMap;
 
 /// Cult-specific AI behavioral modifiers
@@ -41,9 +43,9 @@ impl Default for CultBehaviorModifiers {
 /// Advanced AI scorers for psychological factors
 #[derive(Component, Clone, Debug)]
 pub struct PsychologicalState {
-    pub thirst_level: f32,        // 0.0 to 1.0 - drives resource acquisition
-    pub fear_level: f32,          // 0.0 to 1.0 - affects retreat behavior
-    pub aggression_level: f32,    // 0.0 to 1.0 - affects attack behavior
+    pub thirst_level: f32,         // 0.0 to 1.0 - drives resource acquisition
+    pub fear_level: f32,           // 0.0 to 1.0 - affects retreat behavior
+    pub aggression_level: f32,     // 0.0 to 1.0 - affects attack behavior
     pub corruption_influence: f32, // 0.0 to 1.0 - cult-specific influence
 }
 
@@ -73,12 +75,12 @@ fn create_order_of_the_deep_profile() -> CultProfile {
     CultProfile {
         cult_name: "Order of the Deep".to_string(),
         behavioral_modifiers: CultBehaviorModifiers {
-            attack_bonus: 0.8,      // Less aggressive
-            defense_bonus: 1.3,     // Strong defense
-            gathering_bonus: 1.2,   // Good at resource gathering
-            building_bonus: 1.4,    // Excellent builders
-            research_bonus: 1.6,    // Superior research
-            expansion_bonus: 0.9,   // Cautious expansion
+            attack_bonus: 0.8,    // Less aggressive
+            defense_bonus: 1.3,   // Strong defense
+            gathering_bonus: 1.2, // Good at resource gathering
+            building_bonus: 1.4,  // Excellent builders
+            research_bonus: 1.6,  // Superior research
+            expansion_bonus: 0.9, // Cautious expansion
         },
         preferred_actions: vec![
             "research".to_string(),
@@ -86,9 +88,9 @@ fn create_order_of_the_deep_profile() -> CultProfile {
             "gather_knowledge".to_string(),
             "defend_territory".to_string(),
         ],
-        fear_threshold: 0.3,        // More cautious
-        aggression_level: 0.4,      // Low aggression
-        thirst_drive: 0.8,          // High knowledge thirst
+        fear_threshold: 0.3,   // More cautious
+        aggression_level: 0.4, // Low aggression
+        thirst_drive: 0.8,     // High knowledge thirst
     }
 }
 
@@ -97,12 +99,12 @@ fn create_crimson_covenant_profile() -> CultProfile {
     CultProfile {
         cult_name: "Crimson Covenant".to_string(),
         behavioral_modifiers: CultBehaviorModifiers {
-            attack_bonus: 1.5,      // Highly aggressive
-            defense_bonus: 1.1,     // Moderate defense
-            gathering_bonus: 1.0,   // Normal gathering
-            building_bonus: 0.9,    // Less building focus
-            research_bonus: 0.8,    // Less research
-            expansion_bonus: 1.3,   // Aggressive expansion
+            attack_bonus: 1.5,    // Highly aggressive
+            defense_bonus: 1.1,   // Moderate defense
+            gathering_bonus: 1.0, // Normal gathering
+            building_bonus: 0.9,  // Less building focus
+            research_bonus: 0.8,  // Less research
+            expansion_bonus: 1.3, // Aggressive expansion
         },
         preferred_actions: vec![
             "attack_enemies".to_string(),
@@ -110,9 +112,9 @@ fn create_crimson_covenant_profile() -> CultProfile {
             "expand_territory".to_string(),
             "hunt_souls".to_string(),
         ],
-        fear_threshold: 0.6,        // Less fearful
-        aggression_level: 0.8,      // High aggression
-        thirst_drive: 0.9,          // High blood thirst
+        fear_threshold: 0.6,   // Less fearful
+        aggression_level: 0.8, // High aggression
+        thirst_drive: 0.9,     // High blood thirst
     }
 }
 
@@ -121,12 +123,12 @@ fn create_void_seekers_profile() -> CultProfile {
     CultProfile {
         cult_name: "Void Seekers".to_string(),
         behavioral_modifiers: CultBehaviorModifiers {
-            attack_bonus: 1.1,      // Moderate attack
-            defense_bonus: 0.9,     // Weaker defense
-            gathering_bonus: 0.8,   // Less conventional gathering
-            building_bonus: 1.2,    // Good at mystical structures
-            research_bonus: 1.4,    // Strong research focus
-            expansion_bonus: 1.1,   // Moderate expansion
+            attack_bonus: 1.1,    // Moderate attack
+            defense_bonus: 0.9,   // Weaker defense
+            gathering_bonus: 0.8, // Less conventional gathering
+            building_bonus: 1.2,  // Good at mystical structures
+            research_bonus: 1.4,  // Strong research focus
+            expansion_bonus: 1.1, // Moderate expansion
         },
         preferred_actions: vec![
             "corrupt_land".to_string(),
@@ -134,9 +136,9 @@ fn create_void_seekers_profile() -> CultProfile {
             "summon_entities".to_string(),
             "spread_influence".to_string(),
         ],
-        fear_threshold: 0.4,        // Moderate fear
-        aggression_level: 0.6,      // Moderate aggression
-        thirst_drive: 0.7,          // High corruption thirst
+        fear_threshold: 0.4,   // Moderate fear
+        aggression_level: 0.6, // Moderate aggression
+        thirst_drive: 0.7,     // High corruption thirst
     }
 }
 
@@ -203,23 +205,23 @@ pub fn create_cult_ai(cult_profile: &CultProfile) -> UtilityAI {
     });
 
     // Add cult-specific actions based on profile
-    add_cult_specific_actions(&mut ai, cult_profile, &[
-        thirst_consideration,
-        fear_consideration,
-        aggression_consideration,
-        health_consideration,
-        enemy_distance,
-        resources,
-    ]);
+    add_cult_specific_actions(
+        &mut ai,
+        cult_profile,
+        &[
+            thirst_consideration,
+            fear_consideration,
+            aggression_consideration,
+            health_consideration,
+            enemy_distance,
+            resources,
+        ],
+    );
 
     ai
 }
 
-fn add_cult_specific_actions(
-    ai: &mut UtilityAI,
-    profile: &CultProfile,
-    considerations: &[usize],
-) {
+fn add_cult_specific_actions(ai: &mut UtilityAI, profile: &CultProfile, considerations: &[usize]) {
     let modifiers = &profile.behavioral_modifiers;
 
     // Attack action - modified by cult aggression
@@ -292,13 +294,13 @@ pub fn update_psychological_state_system(
         // Gradually return to baseline
         psychological_state.thirst_level =
             (psychological_state.thirst_level - delta * 0.1).max(0.0);
-        psychological_state.fear_level =
-            (psychological_state.fear_level - delta * 0.2).max(0.0);
+        psychological_state.fear_level = (psychological_state.fear_level - delta * 0.2).max(0.0);
 
         // Aggression increases with thirst for certain cults
         if cult_profile.cult_name == "Crimson Covenant" {
-            psychological_state.aggression_level =
-                (psychological_state.aggression_level + psychological_state.thirst_level * delta * 0.5).min(1.0);
+            psychological_state.aggression_level = (psychological_state.aggression_level
+                + psychological_state.thirst_level * delta * 0.5)
+                .min(1.0);
         }
 
         // Corruption influence affects void seekers
@@ -312,9 +314,9 @@ pub fn update_psychological_state_system(
 /// Helper function to create AI coordination for cult units
 pub fn create_cult_coordination(cult_profile: &CultProfile, role: AIRole) -> AICoordination {
     let base_radius = match cult_profile.cult_name.as_str() {
-        "Order of the Deep" => 80.0,      // Larger coordination for defensive play
-        "Crimson Covenant" => 60.0,       // Medium range for aggressive coordination
-        "Void Seekers" => 100.0,          // Large range for mystical influence
+        "Order of the Deep" => 80.0, // Larger coordination for defensive play
+        "Crimson Covenant" => 60.0,  // Medium range for aggressive coordination
+        "Void Seekers" => 100.0,     // Large range for mystical influence
         _ => 50.0,
     };
 
@@ -356,29 +358,29 @@ pub fn handle_psychological_events(
                 PsychologicalEventType::TakeDamage => {
                     psychological_state.fear_level =
                         (psychological_state.fear_level + event.intensity * 0.3).min(1.0);
-                },
+                }
                 PsychologicalEventType::KillEnemy => {
                     psychological_state.aggression_level =
                         (psychological_state.aggression_level + event.intensity * 0.2).min(1.0);
                     psychological_state.thirst_level =
                         (psychological_state.thirst_level + event.intensity * 0.4).min(1.0);
-                },
+                }
                 PsychologicalEventType::DiscoverResource => {
                     psychological_state.thirst_level =
                         (psychological_state.thirst_level + event.intensity * 0.5).min(1.0);
-                },
+                }
                 PsychologicalEventType::LoseAlly => {
                     psychological_state.fear_level =
                         (psychological_state.fear_level + event.intensity * 0.4).min(1.0);
-                },
+                }
                 PsychologicalEventType::CompleteRitual => {
                     psychological_state.thirst_level =
                         (psychological_state.thirst_level - event.intensity * 0.3).max(0.0);
-                },
+                }
                 PsychologicalEventType::CorruptionExposure => {
                     psychological_state.corruption_influence =
                         (psychological_state.corruption_influence + event.intensity * 0.6).min(1.0);
-                },
+                }
             }
         }
     }
@@ -387,10 +389,11 @@ pub fn handle_psychological_events(
 /// Preset AI configurations for each cult
 pub mod presets {
     use super::*;
-    use crate::systems::{AIStateMachine, AIState, AITransition};
+    use crate::systems::{AIState, AIStateMachine, AITransition};
 
     /// Create a complete AI setup for Order of the Deep units
-    pub fn create_order_of_deep_ai() -> (CultProfile, UtilityAI, AICoordination, PsychologicalState) {
+    pub fn create_order_of_deep_ai() -> (CultProfile, UtilityAI, AICoordination, PsychologicalState)
+    {
         let profile = create_order_of_the_deep_profile();
         let utility_ai = create_cult_ai(&profile);
         let coordination = create_cult_coordination(&profile, AIRole::Follower);
@@ -405,7 +408,8 @@ pub mod presets {
     }
 
     /// Create a complete AI setup for Crimson Covenant units
-    pub fn create_crimson_covenant_ai() -> (CultProfile, UtilityAI, AICoordination, PsychologicalState) {
+    pub fn create_crimson_covenant_ai()
+    -> (CultProfile, UtilityAI, AICoordination, PsychologicalState) {
         let profile = create_crimson_covenant_profile();
         let utility_ai = create_cult_ai(&profile);
         let coordination = create_cult_coordination(&profile, AIRole::Follower);
@@ -420,17 +424,19 @@ pub mod presets {
     }
 
     /// Create a complete AI setup for Void Seekers units
-    pub fn create_void_seekers_ai() -> (CultProfile, UtilityAI, AICoordination, PsychologicalState) {
+    pub fn create_void_seekers_ai() -> (CultProfile, UtilityAI, AICoordination, PsychologicalState)
+    {
         let profile = create_void_seekers_profile();
         let utility_ai = create_cult_ai(&profile);
         let coordination = create_cult_coordination(&profile, AIRole::Follower);
         let psychological_state = PsychologicalState {
-            thirst_level: 0.5,     // Moderate thirst
-            fear_level: 0.3,       // Moderate fear
-            aggression_level: 0.5, // Moderate aggression
+            thirst_level: 0.5,         // Moderate thirst
+            fear_level: 0.3,           // Moderate fear
+            aggression_level: 0.5,     // Moderate aggression
             corruption_influence: 0.8, // High corruption
         };
 
         (profile, utility_ai, coordination, psychological_state)
     }
-}impl bevy::prelude::Message for PsychologicalEvent {}
+}
+impl bevy::prelude::Message for PsychologicalEvent {}

@@ -1,9 +1,9 @@
+use crate::{Team, Unit};
 use bevy::prelude::*;
-use crate::{Unit, Team};
 use game_physics::{
-    CollisionEvent, TriggerEvent, RaycastEvent, RaycastResultEvent,
-    Velocity, AABB, Mass, MovementController, SpatialData,
-    CollisionType, RaycastHit, MovementCommandEvent, MovementCommand
+    AABB, CollisionEvent, CollisionType, Mass, MovementCommand, MovementCommandEvent,
+    MovementController, RaycastEvent, RaycastHit, RaycastResultEvent, SpatialData, TriggerEvent,
+    Velocity,
 };
 
 // ==============================================================================
@@ -18,8 +18,8 @@ pub fn unit_collision_handler(
     for collision_event in collision_events.read() {
         // Check if both entities are units
         if let Ok([(mut vel_a, trans_a, team_a), (mut vel_b, trans_b, team_b)]) =
-            unit_query.get_many_mut([collision_event.entity_a, collision_event.entity_b]) {
-
+            unit_query.get_many_mut([collision_event.entity_a, collision_event.entity_b])
+        {
             // Calculate separation force
             let separation_direction = (trans_a.translation - trans_b.translation).normalize();
             let separation_force = separation_direction * 5.0; // Separation strength
@@ -45,31 +45,31 @@ pub fn obstacle_collision_handler(
 ) {
     for collision_event in collision_events.read() {
         // Check if one entity is a unit and the other is an obstacle
-        if let Ok((mut velocity, mut controller)) = unit_query.get_mut(collision_event.entity_a) {
-            if obstacle_query.get(collision_event.entity_b).is_ok() {
-                // Stop unit movement and recalculate path
-                velocity.linear *= 0.5; // Slow down
-                controller.is_moving = false;
+        if let Ok((mut velocity, mut controller)) = unit_query.get_mut(collision_event.entity_a)
+            && obstacle_query.get(collision_event.entity_b).is_ok()
+        {
+            // Stop unit movement and recalculate path
+            velocity.linear *= 0.5; // Slow down
+            controller.is_moving = false;
 
-                // Mark that unit needs to recalculate path
-                if let Some(target) = controller.target_position {
-                    // Will trigger pathfinding recalculation
-                    controller.waypoints.clear();
-                    controller.path_index = 0;
-                }
+            // Mark that unit needs to recalculate path
+            if let Some(target) = controller.target_position {
+                // Will trigger pathfinding recalculation
+                controller.waypoints.clear();
+                controller.path_index = 0;
             }
         }
 
         // Check reverse case
-        if let Ok((mut velocity, mut controller)) = unit_query.get_mut(collision_event.entity_b) {
-            if obstacle_query.get(collision_event.entity_a).is_ok() {
-                velocity.linear *= 0.5;
-                controller.is_moving = false;
+        if let Ok((mut velocity, mut controller)) = unit_query.get_mut(collision_event.entity_b)
+            && obstacle_query.get(collision_event.entity_a).is_ok()
+        {
+            velocity.linear *= 0.5;
+            controller.is_moving = false;
 
-                if let Some(target) = controller.target_position {
-                    controller.waypoints.clear();
-                    controller.path_index = 0;
-                }
+            if let Some(target) = controller.target_position {
+                controller.waypoints.clear();
+                controller.path_index = 0;
             }
         }
     }
@@ -89,6 +89,7 @@ pub fn find_nearby_units(
 }
 
 /// System to update unit spatial data
+#[allow(clippy::type_complexity)]
 pub fn update_unit_spatial_data(
     mut query: Query<(&Transform, &mut SpatialData), (With<Unit>, Changed<Transform>)>,
 ) {
@@ -134,12 +135,7 @@ pub fn apply_steering_behavior(
 /// System for smooth physics-based unit movement with steering
 pub fn physics_steering_movement_system(
     time: Res<Time>,
-    mut query: Query<(
-        &mut Velocity,
-        &Transform,
-        &mut MovementController,
-        &Mass,
-    ), With<Unit>>,
+    mut query: Query<(&mut Velocity, &Transform, &mut MovementController, &Mass), With<Unit>>,
 ) {
     let dt = time.delta_secs();
 
@@ -151,7 +147,9 @@ pub fn physics_steering_movement_system(
         }
 
         // Get current target (either direct target or current waypoint)
-        let target = if !controller.waypoints.is_empty() && controller.path_index < controller.waypoints.len() {
+        let target = if !controller.waypoints.is_empty()
+            && controller.path_index < controller.waypoints.len()
+        {
             controller.waypoints[controller.path_index]
         } else if let Some(target_pos) = controller.target_position {
             target_pos
@@ -210,28 +208,32 @@ pub fn projectile_collision_system(
 ) {
     for collision_event in collision_events.read() {
         // Check if entity_a is a projectile
-        if let Ok(projectile) = projectile_query.get(collision_event.entity_a) {
-            if let Ok(mut unit) = unit_query.get_mut(collision_event.entity_b) {
-                // Apply damage
-                unit.health -= projectile.damage;
+        if let Ok(projectile) = projectile_query.get(collision_event.entity_a)
+            && let Ok(mut unit) = unit_query.get_mut(collision_event.entity_b)
+        {
+            // Apply damage
+            unit.health -= projectile.damage;
 
-                // Despawn projectile
-                commands.entity(collision_event.entity_a).despawn();
+            // Despawn projectile
+            commands.entity(collision_event.entity_a).despawn();
 
-                #[cfg(feature = "web")]
-                web_sys::console::log_1(&format!("Projectile hit unit for {} damage", projectile.damage).into());
-            }
+            #[cfg(feature = "web")]
+            web_sys::console::log_1(
+                &format!("Projectile hit unit for {} damage", projectile.damage).into(),
+            );
         }
 
         // Check reverse case
-        if let Ok(projectile) = projectile_query.get(collision_event.entity_b) {
-            if let Ok(mut unit) = unit_query.get_mut(collision_event.entity_a) {
-                unit.health -= projectile.damage;
-                commands.entity(collision_event.entity_b).despawn();
+        if let Ok(projectile) = projectile_query.get(collision_event.entity_b)
+            && let Ok(mut unit) = unit_query.get_mut(collision_event.entity_a)
+        {
+            unit.health -= projectile.damage;
+            commands.entity(collision_event.entity_b).despawn();
 
-                #[cfg(feature = "web")]
-                web_sys::console::log_1(&format!("Projectile hit unit for {} damage", projectile.damage).into());
-            }
+            #[cfg(feature = "web")]
+            web_sys::console::log_1(
+                &format!("Projectile hit unit for {} damage", projectile.damage).into(),
+            );
         }
     }
 }
@@ -253,13 +255,15 @@ pub struct UnitsPhysicsIntegrationPlugin;
 
 impl Plugin for UnitsPhysicsIntegrationPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, (
+        app.add_systems(
+            Update,
+            (
                 unit_collision_handler,
                 obstacle_collision_handler,
                 physics_steering_movement_system,
                 update_unit_spatial_data,
                 projectile_collision_system,
-            ));
+            ),
+        );
     }
 }

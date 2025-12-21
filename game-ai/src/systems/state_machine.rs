@@ -47,23 +47,59 @@ impl Default for AIStateMachine {
         let mut transitions = HashMap::new();
 
         // Define default state transitions
-        transitions.insert((AIState::Idle, AITransition::ResourcesLow), AIState::Gathering);
-        transitions.insert((AIState::Idle, AITransition::UnderAttack), AIState::Defending);
-        transitions.insert((AIState::Idle, AITransition::EnemySpotted), AIState::Attacking);
+        transitions.insert(
+            (AIState::Idle, AITransition::ResourcesLow),
+            AIState::Gathering,
+        );
+        transitions.insert(
+            (AIState::Idle, AITransition::UnderAttack),
+            AIState::Defending,
+        );
+        transitions.insert(
+            (AIState::Idle, AITransition::EnemySpotted),
+            AIState::Attacking,
+        );
 
-        transitions.insert((AIState::Gathering, AITransition::ResourcesHigh), AIState::Building);
-        transitions.insert((AIState::Gathering, AITransition::UnderAttack), AIState::Defending);
+        transitions.insert(
+            (AIState::Gathering, AITransition::ResourcesHigh),
+            AIState::Building,
+        );
+        transitions.insert(
+            (AIState::Gathering, AITransition::UnderAttack),
+            AIState::Defending,
+        );
 
-        transitions.insert((AIState::Building, AITransition::BuildingComplete), AIState::Idle);
-        transitions.insert((AIState::Building, AITransition::UnderAttack), AIState::Defending);
+        transitions.insert(
+            (AIState::Building, AITransition::BuildingComplete),
+            AIState::Idle,
+        );
+        transitions.insert(
+            (AIState::Building, AITransition::UnderAttack),
+            AIState::Defending,
+        );
 
-        transitions.insert((AIState::Attacking, AITransition::HealthLow), AIState::Retreating);
-        transitions.insert((AIState::Attacking, AITransition::EnemyDefeated), AIState::Idle);
+        transitions.insert(
+            (AIState::Attacking, AITransition::HealthLow),
+            AIState::Retreating,
+        );
+        transitions.insert(
+            (AIState::Attacking, AITransition::EnemyDefeated),
+            AIState::Idle,
+        );
 
-        transitions.insert((AIState::Defending, AITransition::EnemyDefeated), AIState::Idle);
-        transitions.insert((AIState::Defending, AITransition::HealthLow), AIState::Retreating);
+        transitions.insert(
+            (AIState::Defending, AITransition::EnemyDefeated),
+            AIState::Idle,
+        );
+        transitions.insert(
+            (AIState::Defending, AITransition::HealthLow),
+            AIState::Retreating,
+        );
 
-        transitions.insert((AIState::Retreating, AITransition::HealthHigh), AIState::Idle);
+        transitions.insert(
+            (AIState::Retreating, AITransition::HealthHigh),
+            AIState::Idle,
+        );
 
         Self {
             current_state: AIState::Idle,
@@ -99,12 +135,16 @@ impl AIStateMachine {
         if let Some(timer) = self.state_timers.get_mut(&self.current_state) {
             *timer += delta_time;
         } else {
-            self.state_timers.insert(self.current_state.clone(), delta_time);
+            self.state_timers
+                .insert(self.current_state.clone(), delta_time);
         }
     }
 
     pub fn get_state_duration(&self) -> f32 {
-        self.state_timers.get(&self.current_state).copied().unwrap_or(0.0)
+        self.state_timers
+            .get(&self.current_state)
+            .copied()
+            .unwrap_or(0.0)
     }
 
     pub fn force_state(&mut self, new_state: AIState) {
@@ -118,7 +158,8 @@ impl AIStateMachine {
     }
 
     pub fn can_transition(&self, trigger: &AITransition) -> bool {
-        self.state_transitions.contains_key(&(self.current_state.clone(), trigger.clone()))
+        self.state_transitions
+            .contains_key(&(self.current_state.clone(), trigger.clone()))
     }
 }
 
@@ -162,25 +203,24 @@ impl HierarchicalStateMachine {
 
     pub fn transition_sub(&mut self, trigger: AITransition) -> bool {
         if let Some(active) = &self.active_sub_state
-            && let Some(sub_machine) = self.sub_states.get_mut(active) {
-                return sub_machine.transition(trigger);
-            }
+            && let Some(sub_machine) = self.sub_states.get_mut(active)
+        {
+            return sub_machine.transition(trigger);
+        }
         false
     }
 
     pub fn update(&mut self, delta_time: f32) {
         if let Some(active) = &self.active_sub_state
-            && let Some(sub_machine) = self.sub_states.get_mut(active) {
-                sub_machine.update(delta_time);
-            }
+            && let Some(sub_machine) = self.sub_states.get_mut(active)
+        {
+            sub_machine.update(delta_time);
+        }
     }
 }
 
 // State machine system
-pub fn state_machine_update_system(
-    time: Res<Time>,
-    mut query: Query<&mut AIStateMachine>,
-) {
+pub fn state_machine_update_system(time: Res<Time>, mut query: Query<&mut AIStateMachine>) {
     let delta = time.delta_secs();
 
     for mut state_machine in query.iter_mut() {
@@ -194,51 +234,47 @@ pub fn state_machine_update_system(
 }
 
 // State-specific behavior execution
-pub fn execute_state_behavior(
-    state: &AIState,
-    entity: Entity,
-    commands: &mut Commands,
-) {
+pub fn execute_state_behavior(state: &AIState, entity: Entity, commands: &mut Commands) {
     match state {
         AIState::Idle => {
             // Do nothing special
-        },
+        }
         AIState::Gathering => {
             // Move to resource and collect
             commands.entity(entity).insert(GatheringBehavior {
                 target_resource: None,
                 gathering_rate: 1.0,
             });
-        },
+        }
         AIState::Building => {
             // Construct buildings
             commands.entity(entity).insert(BuildingBehavior {
                 building_type: None,
                 progress: 0.0,
             });
-        },
+        }
         AIState::Attacking => {
             // Engage enemies
             commands.entity(entity).insert(AttackBehavior {
                 target: None,
                 aggression_level: 1.0,
             });
-        },
+        }
         AIState::Defending => {
             // Protect area
             commands.entity(entity).insert(DefendBehavior {
                 defend_position: Vec3::ZERO,
                 patrol_radius: 10.0,
             });
-        },
+        }
         AIState::Retreating => {
             // Move to safety
             commands.entity(entity).insert(RetreatBehavior {
                 safe_position: None,
                 retreat_threshold: 0.3,
             });
-        },
-        _ => {},
+        }
+        _ => {}
     }
 }
 

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // ==============================================================================
 // CORE PHYSICS COMPONENTS
@@ -91,7 +91,13 @@ pub struct MovementTarget {
 
 impl MovementTarget {
     pub fn new(x: f32, y: f32, z: f32, speed: f32) -> Self {
-        Self { x, y, z, reached: false, speed }
+        Self {
+            x,
+            y,
+            z,
+            reached: false,
+            speed,
+        }
     }
 }
 
@@ -139,7 +145,10 @@ impl SpatialData {
         self.last_position = self.position;
         self.position = new_position;
 
-        let new_grid_cell = ((new_position.x / grid_size) as i32, (new_position.z / grid_size) as i32);
+        let new_grid_cell = (
+            (new_position.x / grid_size) as i32,
+            (new_position.z / grid_size) as i32,
+        );
         self.has_moved = new_grid_cell != self.grid_cell || self.position != self.last_position;
         self.grid_cell = new_grid_cell;
     }
@@ -281,9 +290,12 @@ impl AABB {
         let (min_a, max_a) = self.get_bounds(center_a);
         let (min_b, max_b) = other.get_bounds(center_b);
 
-        min_a.x <= max_b.x && max_a.x >= min_b.x &&
-        min_a.y <= max_b.y && max_a.y >= min_b.y &&
-        min_a.z <= max_b.z && max_a.z >= min_b.z
+        min_a.x <= max_b.x
+            && max_a.x >= min_b.x
+            && min_a.y <= max_b.y
+            && max_a.y >= min_b.y
+            && min_a.z <= max_b.z
+            && max_a.z >= min_b.z
     }
 }
 

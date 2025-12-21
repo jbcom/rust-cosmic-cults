@@ -1,17 +1,16 @@
 // AI-Physics integration test module
-#![cfg(test)]
 
-use bevy::prelude::*;
-use game_physics::prelude::*;
 use crate::{
     GameAIPlugin,
     cult_profiles::{CultProfile, PsychologicalState, create_cult_profile, presets},
     systems::{
-        AIStateMachine, AIState, AITransition,
-        GatheringBehavior, AttackBehavior, DefendBehavior, RetreatBehavior,
+        AIState, AIStateMachine, AITransition, AttackBehavior, DefendBehavior, GatheringBehavior,
+        RetreatBehavior,
     },
     types::{AICoordination, AIRole},
 };
+use bevy::prelude::*;
+use game_physics::prelude::*;
 
 /// Integration test to verify AI behaviors trigger physics movement commands
 #[test]
@@ -25,21 +24,26 @@ fn test_ai_physics_integration() {
         .add_message::<MovementCommandEvent>();
 
     // Spawn test entity with AI components
-    let entity = app.world_mut().spawn((
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        GlobalTransform::default(),
-        AIStateMachine::default(),
-        MovementController::default(),
-        Velocity::default(),
-        SpatialData::new(Vec3::ZERO),
-        CollisionMask::default(),
-    )).id();
+    let entity = app
+        .world_mut()
+        .spawn((
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            GlobalTransform::default(),
+            AIStateMachine::default(),
+            MovementController::default(),
+            Velocity::default(),
+            SpatialData::new(Vec3::ZERO),
+            CollisionMask::default(),
+        ))
+        .id();
 
     // Test gathering behavior triggers movement
-    app.world_mut().entity_mut(entity).insert(GatheringBehavior {
-        target_resource: None,
-        gathering_rate: 1.0,
-    });
+    app.world_mut()
+        .entity_mut(entity)
+        .insert(GatheringBehavior {
+            target_resource: None,
+            gathering_rate: 1.0,
+        });
 
     // Run one update cycle
     app.update();
@@ -81,21 +85,23 @@ fn test_cult_profiles() {
 fn test_psychological_states() {
     let mut app = App::new();
 
-    app.add_plugins(MinimalPlugins)
-        .add_plugins(GameAIPlugin);
+    app.add_plugins(MinimalPlugins).add_plugins(GameAIPlugin);
 
     // Create entity with psychological state
     let (profile, utility_ai, coordination, psychological_state) =
         presets::create_crimson_covenant_ai();
 
-    let entity = app.world_mut().spawn((
-        Transform::default(),
-        GlobalTransform::default(),
-        profile,
-        utility_ai,
-        coordination,
-        psychological_state,
-    )).id();
+    let entity = app
+        .world_mut()
+        .spawn((
+            Transform::default(),
+            GlobalTransform::default(),
+            profile,
+            utility_ai,
+            coordination,
+            psychological_state,
+        ))
+        .id();
 
     // Run update to test psychological systems
     app.update();
@@ -134,17 +140,13 @@ fn test_ai_state_transitions() {
 #[ignore] // TODO: Fix assertion failure
 fn test_ai_entity_spawning() {
     let mut app = App::new();
-    app.add_plugins(MinimalPlugins)
-        .add_plugins(GameAIPlugin);
+    app.add_plugins(MinimalPlugins).add_plugins(GameAIPlugin);
 
     let mut commands = app.world_mut().commands();
 
     // Test spawning basic AI entity
-    let entity = GameAIPlugin::spawn_basic_ai(
-        &mut commands,
-        Vec3::new(5.0, 0.0, 5.0),
-        AIRole::Worker
-    );
+    let entity =
+        GameAIPlugin::spawn_basic_ai(&mut commands, Vec3::new(5.0, 0.0, 5.0), AIRole::Worker);
 
     // Flush commands
     app.world_mut().flush();
@@ -172,45 +174,55 @@ fn test_full_ai_integration() {
 
     // Create cult entities
     let (deep_profile, deep_ai, deep_coord, deep_psych) = presets::create_order_of_deep_ai();
-    let (crimson_profile, crimson_ai, crimson_coord, crimson_psych) = presets::create_crimson_covenant_ai();
+    let (crimson_profile, crimson_ai, crimson_coord, crimson_psych) =
+        presets::create_crimson_covenant_ai();
     let (void_profile, void_ai, void_coord, void_psych) = presets::create_void_seekers_ai();
 
     // Spawn entities with full AI setups
-    let deep_entity = app.world_mut().spawn((
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        GlobalTransform::default(),
-        deep_profile,
-        deep_ai,
-        deep_coord,
-        deep_psych,
-        MovementController::default(),
-        Velocity::default(),
-        SpatialData::new(Vec3::ZERO),
-    )).id();
+    let deep_entity = app
+        .world_mut()
+        .spawn((
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            GlobalTransform::default(),
+            deep_profile,
+            deep_ai,
+            deep_coord,
+            deep_psych,
+            MovementController::default(),
+            Velocity::default(),
+            SpatialData::new(Vec3::ZERO),
+        ))
+        .id();
 
-    let crimson_entity = app.world_mut().spawn((
-        Transform::from_xyz(10.0, 0.0, 0.0),
-        GlobalTransform::default(),
-        crimson_profile,
-        crimson_ai,
-        crimson_coord,
-        crimson_psych,
-        MovementController::default(),
-        Velocity::default(),
-        SpatialData::new(Vec3::new(10.0, 0.0, 0.0)),
-    )).id();
+    let crimson_entity = app
+        .world_mut()
+        .spawn((
+            Transform::from_xyz(10.0, 0.0, 0.0),
+            GlobalTransform::default(),
+            crimson_profile,
+            crimson_ai,
+            crimson_coord,
+            crimson_psych,
+            MovementController::default(),
+            Velocity::default(),
+            SpatialData::new(Vec3::new(10.0, 0.0, 0.0)),
+        ))
+        .id();
 
-    let void_entity = app.world_mut().spawn((
-        Transform::from_xyz(20.0, 0.0, 0.0),
-        GlobalTransform::default(),
-        void_profile,
-        void_ai,
-        void_coord,
-        void_psych,
-        MovementController::default(),
-        Velocity::default(),
-        SpatialData::new(Vec3::new(20.0, 0.0, 0.0)),
-    )).id();
+    let void_entity = app
+        .world_mut()
+        .spawn((
+            Transform::from_xyz(20.0, 0.0, 0.0),
+            GlobalTransform::default(),
+            void_profile,
+            void_ai,
+            void_coord,
+            void_psych,
+            MovementController::default(),
+            Velocity::default(),
+            SpatialData::new(Vec3::new(20.0, 0.0, 0.0)),
+        ))
+        .id();
 
     // Run several update cycles to test full integration
     for _ in 0..5 {
@@ -227,9 +239,18 @@ fn test_full_ai_integration() {
     assert!(void_ref.get::<CultProfile>().is_some());
 
     // Verify cult names are correct
-    assert_eq!(deep_ref.get::<CultProfile>().unwrap().cult_name, "Order of the Deep");
-    assert_eq!(crimson_ref.get::<CultProfile>().unwrap().cult_name, "Crimson Covenant");
-    assert_eq!(void_ref.get::<CultProfile>().unwrap().cult_name, "Void Seekers");
+    assert_eq!(
+        deep_ref.get::<CultProfile>().unwrap().cult_name,
+        "Order of the Deep"
+    );
+    assert_eq!(
+        crimson_ref.get::<CultProfile>().unwrap().cult_name,
+        "Crimson Covenant"
+    );
+    assert_eq!(
+        void_ref.get::<CultProfile>().unwrap().cult_name,
+        "Void Seekers"
+    );
 
     println!("✓ Full AI integration test passed");
 }
@@ -245,14 +266,17 @@ fn test_ai_behavior_execution() {
         .add_message::<MovementCommandEvent>();
 
     // Create entity that will get attack behavior
-    let entity = app.world_mut().spawn((
-        Transform::default(),
-        GlobalTransform::default(),
-        MovementController::default(),
-        Velocity::default(),
-        SpatialData::new(Vec3::ZERO),
-        CollisionMask::default(),
-    )).id();
+    let entity = app
+        .world_mut()
+        .spawn((
+            Transform::default(),
+            GlobalTransform::default(),
+            MovementController::default(),
+            Velocity::default(),
+            SpatialData::new(Vec3::ZERO),
+            CollisionMask::default(),
+        ))
+        .id();
 
     // Add attack behavior (this should trigger movement command in next update)
     app.world_mut().entity_mut(entity).insert(AttackBehavior {

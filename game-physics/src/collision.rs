@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::*;
 use crate::spatial::GlobalSpatialGrid;
+use bevy::prelude::*;
 // Use our physics Sphere to avoid name conflict
 use crate::components::Sphere as PhysicsSphere;
 
@@ -42,8 +42,8 @@ pub fn aabb_collision_system(
 ) {
     for &(entity_a, entity_b) in &collision_pairs.pairs {
         if let (Ok((transform_a, aabb_a)), Ok((transform_b, aabb_b))) =
-            (aabb_query.get(entity_a), aabb_query.get(entity_b)) {
-
+            (aabb_query.get(entity_a), aabb_query.get(entity_b))
+        {
             if aabb_a.overlaps(transform_a.translation, aabb_b, transform_b.translation) {
                 collision_events.write(CollisionEvent {
                     entity_a,
@@ -65,8 +65,8 @@ pub fn sphere_collision_system(
 ) {
     for &(entity_a, entity_b) in &collision_pairs.pairs {
         if let (Ok((transform_a, sphere_a)), Ok((transform_b, sphere_b))) =
-            (sphere_query.get(entity_a), sphere_query.get(entity_b)) {
-
+            (sphere_query.get(entity_a), sphere_query.get(entity_b))
+        {
             if sphere_a.overlaps(transform_a.translation, sphere_b, transform_b.translation) {
                 let center_a = transform_a.translation + sphere_a.center_offset;
                 let center_b = transform_b.translation + sphere_b.center_offset;
@@ -93,12 +93,17 @@ pub fn sensor_system(
 ) {
     for &(sensor_entity, other_entity) in &collision_pairs.pairs {
         // Check if one entity is a sensor
-        if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) =
-            (sensor_query.get(sensor_entity), entity_query.get(other_entity)) {
-
-            if sensor.is_active &&
-               sensor_sphere.overlaps(sensor_transform.translation, &PhysicsSphere::new(0.1), other_transform.translation) {
-
+        if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = (
+            sensor_query.get(sensor_entity),
+            entity_query.get(other_entity),
+        ) {
+            if sensor.is_active
+                && sensor_sphere.overlaps(
+                    sensor_transform.translation,
+                    &PhysicsSphere::new(0.1),
+                    other_transform.translation,
+                )
+            {
                 trigger_events.write(TriggerEvent {
                     sensor_entity,
                     triggered_by: other_entity,
@@ -107,12 +112,17 @@ pub fn sensor_system(
             }
         }
         // Check reverse (other entity might be the sensor)
-        else if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) =
-            (sensor_query.get(other_entity), entity_query.get(sensor_entity)) {
-
-            if sensor.is_active &&
-               sensor_sphere.overlaps(sensor_transform.translation, &PhysicsSphere::new(0.1), other_transform.translation) {
-
+        else if let (Ok((sensor_transform, sensor_sphere, sensor)), Ok(other_transform)) = (
+            sensor_query.get(other_entity),
+            entity_query.get(sensor_entity),
+        ) {
+            if sensor.is_active
+                && sensor_sphere.overlaps(
+                    sensor_transform.translation,
+                    &PhysicsSphere::new(0.1),
+                    other_transform.translation,
+                )
+            {
                 trigger_events.write(TriggerEvent {
                     sensor_entity: other_entity,
                     triggered_by: sensor_entity,
@@ -139,14 +149,16 @@ pub fn collision_response_system(
         let body_type_b = rigid_body_query.get(entity_b).map(|rb| &rb.body_type).ok();
 
         // Skip collision response for static bodies
-        if matches!(body_type_a, Some(RigidBodyVariant::Static)) &&
-           matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+        if matches!(body_type_a, Some(RigidBodyVariant::Static))
+            && matches!(body_type_b, Some(RigidBodyVariant::Static))
+        {
             continue;
         }
 
         // Skip if both entities are static
-        if matches!(body_type_a, Some(RigidBodyVariant::Static)) &&
-           matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+        if matches!(body_type_a, Some(RigidBodyVariant::Static))
+            && matches!(body_type_b, Some(RigidBodyVariant::Static))
+        {
             continue;
         }
 
@@ -155,30 +167,31 @@ pub fn collision_response_system(
             if let Ok(velocities) = velocity_query.get_many_mut([entity_a, entity_b]) {
                 let [mut vel_a, mut vel_b] = velocities;
 
-            let mass_a = mass_query.get(entity_a).map(|m| m.value).unwrap_or(1.0);
-            let mass_b = mass_query.get(entity_b).map(|m| m.value).unwrap_or(1.0);
+                let mass_a = mass_query.get(entity_a).map(|m| m.value).unwrap_or(1.0);
+                let mass_b = mass_query.get(entity_b).map(|m| m.value).unwrap_or(1.0);
 
-            // Simple elastic collision response
-            let restitution = 0.8; // Bounciness factor
-            let relative_velocity = vel_a.linear - vel_b.linear;
-            let velocity_along_normal = relative_velocity.dot(collision_event.normal);
+                // Simple elastic collision response
+                let restitution = 0.8; // Bounciness factor
+                let relative_velocity = vel_a.linear - vel_b.linear;
+                let velocity_along_normal = relative_velocity.dot(collision_event.normal);
 
-            // Don't resolve if objects are separating
-            if velocity_along_normal > 0.0 {
-                continue;
-            }
+                // Don't resolve if objects are separating
+                if velocity_along_normal > 0.0 {
+                    continue;
+                }
 
-            // Calculate collision impulse
-            let impulse_magnitude = -(1.0 + restitution) * velocity_along_normal / (mass_a + mass_b);
-            let impulse = collision_event.normal * impulse_magnitude;
+                // Calculate collision impulse
+                let impulse_magnitude =
+                    -(1.0 + restitution) * velocity_along_normal / (mass_a + mass_b);
+                let impulse = collision_event.normal * impulse_magnitude;
 
-            // Apply impulse based on rigid body types
-            if !matches!(body_type_a, Some(RigidBodyVariant::Static)) {
-                vel_a.linear += impulse * mass_a;
-            }
-            if !matches!(body_type_b, Some(RigidBodyVariant::Static)) {
-                vel_b.linear -= impulse * mass_b;
-            }
+                // Apply impulse based on rigid body types
+                if !matches!(body_type_a, Some(RigidBodyVariant::Static)) {
+                    vel_a.linear += impulse * mass_a;
+                }
+                if !matches!(body_type_b, Some(RigidBodyVariant::Static)) {
+                    vel_b.linear -= impulse * mass_b;
+                }
             }
         }
     }

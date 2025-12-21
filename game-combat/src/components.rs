@@ -152,7 +152,7 @@ pub struct Projectile {
 #[derive(Clone, Debug)]
 pub struct AreaDamage {
     pub radius: f32,
-    pub falloff: f32,  // Damage reduction per unit distance
+    pub falloff: f32, // Damage reduction per unit distance
     pub friendly_fire: bool,
 }
 
@@ -183,7 +183,7 @@ pub struct AttackCooldown {
 impl AttackCooldown {
     pub fn new(base_attack_speed: f32) -> Self {
         Self {
-            time_until_next: 1.0 / base_attack_speed,  // Initialize with proper cooldown
+            time_until_next: 1.0 / base_attack_speed, // Initialize with proper cooldown
             attack_speed_modifier: 1.0,
         }
     }

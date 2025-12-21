@@ -1,8 +1,7 @@
-use bevy::prelude::*;
+use crate::{AuraType, Health, Leader, Selected, SelectionState, Team, Unit};
 use bevy::pbr::StandardMaterial;
+use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
-use crate::{Unit, Leader, Team, Selected, SelectionState, AuraType, Health};
-
 
 // Visual component markers
 #[derive(Component)]
@@ -41,9 +40,9 @@ pub const SELECTION_INDICATOR_Y_OFFSET: f32 = 0.1;
 /// Get color for a specific aura type
 pub fn get_aura_color(aura_type: &AuraType) -> Color {
     match aura_type {
-        AuraType::Crimson => Color::srgba(0.8, 0.1, 0.1, 0.3),    // Blood red
-        AuraType::Deep => Color::srgba(0.1, 0.3, 0.6, 0.3),       // Deep ocean blue
-        AuraType::Void => Color::srgba(0.5, 0.1, 0.8, 0.3),       // Purple void
+        AuraType::Crimson => Color::srgba(0.8, 0.1, 0.1, 0.3), // Blood red
+        AuraType::Deep => Color::srgba(0.1, 0.3, 0.6, 0.3),    // Deep ocean blue
+        AuraType::Void => Color::srgba(0.5, 0.1, 0.8, 0.3),    // Purple void
         AuraType::Leadership => Color::srgba(0.9, 0.7, 0.1, 0.3), // Golden
     }
 }
@@ -97,10 +96,7 @@ pub fn update_selection_indicators(
 }
 
 /// System to animate aura visuals
-pub fn animate_aura_visuals(
-    time: Res<Time>,
-    mut aura_query: Query<(&mut Transform, &AuraVisual)>,
-) {
+pub fn animate_aura_visuals(time: Res<Time>, mut aura_query: Query<(&mut Transform, &AuraVisual)>) {
     for (mut transform, aura) in aura_query.iter_mut() {
         // Pulsing animation
         let pulse = (time.elapsed_secs() * 2.0).sin() * 0.1 + 1.0;
@@ -146,7 +142,7 @@ pub fn create_health_bar(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
 ) -> Entity {
-    let health_bar = commands
+    commands
         .spawn((
             Name::new("HealthBar"),
             Mesh3d(meshes.add(Cuboid::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, 0.05))),
@@ -161,7 +157,11 @@ pub fn create_health_bar(
             // Health fill
             parent.spawn((
                 Name::new("HealthFill"),
-                Mesh3d(meshes.add(Cuboid::new(HEALTH_BAR_WIDTH * 0.95, HEALTH_BAR_HEIGHT * 0.8, 0.04))),
+                Mesh3d(meshes.add(Cuboid::new(
+                    HEALTH_BAR_WIDTH * 0.95,
+                    HEALTH_BAR_HEIGHT * 0.8,
+                    0.04,
+                ))),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
                     emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
@@ -175,9 +175,7 @@ pub fn create_health_bar(
                 HealthBarFill,
             ));
         })
-        .id();
-
-    health_bar
+        .id()
 }
 
 /// Create selection indicator entity
@@ -190,7 +188,10 @@ pub fn create_selection_indicator(
     commands
         .spawn((
             Name::new("SelectionIndicator"),
-            Mesh3d(meshes.add(Torus::new(SELECTION_INDICATOR_RADIUS * 0.1, SELECTION_INDICATOR_RADIUS))),
+            Mesh3d(meshes.add(Torus::new(
+                SELECTION_INDICATOR_RADIUS * 0.1,
+                SELECTION_INDICATOR_RADIUS,
+            ))),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: team_color.with_alpha(0.5),
                 alpha_mode: AlphaMode::Blend,
@@ -314,23 +315,32 @@ pub fn handle_death_visuals(
             }
 
             #[cfg(feature = "web")]
-            web_sys::console::log_1(&format!("Unit died with health: {}/{}", health.current, health.maximum).into());
+            web_sys::console::log_1(
+                &format!(
+                    "Unit died with health: {}/{}",
+                    health.current, health.maximum
+                )
+                .into(),
+            );
         }
     }
 }
 
 /// System to update unit colors based on team
 pub fn update_team_colors(
-    mut material_query: Query<(&ChildOf, &MeshMaterial3d<StandardMaterial>), With<SelectionIndicator>>,
+    mut material_query: Query<
+        (&ChildOf, &MeshMaterial3d<StandardMaterial>),
+        With<SelectionIndicator>,
+    >,
     team_query: Query<&Team, Changed<Team>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (parent, mat_handle) in material_query.iter_mut() {
-        if let Ok(team) = team_query.get(parent.parent()) {
-            if let Some(material) = materials.get_mut(&mat_handle.0) {
-                material.base_color = team.color.with_alpha(0.5);
-                material.emissive = color_to_emissive(team.color);
-            }
+        if let Ok(team) = team_query.get(parent.parent())
+            && let Some(material) = materials.get_mut(&mat_handle.0)
+        {
+            material.base_color = team.color.with_alpha(0.5);
+            material.emissive = color_to_emissive(team.color);
         }
     }
 }

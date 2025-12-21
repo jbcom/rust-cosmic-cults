@@ -1,20 +1,23 @@
 // Damage calculation and application system
-use bevy::prelude::*;
 use crate::components::*;
 use crate::states::Health;
+use bevy::prelude::*;
 
 pub struct DamagePlugin;
 
 impl Plugin for DamagePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_message::<DamageEvent>()
+        app.add_message::<DamageEvent>()
             .add_message::<DeathEvent>()
-            .add_systems(Update, (
-                process_damage_events,
-                apply_damage_modifiers,
-                check_for_deaths,
-            ).chain());
+            .add_systems(
+                Update,
+                (
+                    process_damage_events,
+                    apply_damage_modifiers,
+                    check_for_deaths,
+                )
+                    .chain(),
+            );
     }
 }
 
@@ -118,10 +121,7 @@ fn apply_shield_damage(shield: &mut Shield, damage: f32) -> f32 {
 }
 
 /// Apply damage over time effects
-pub fn apply_damage_modifiers(
-    mut query: Query<(&mut Health, &StatusEffect)>,
-    time: Res<Time>,
-) {
+pub fn apply_damage_modifiers(mut query: Query<(&mut Health, &StatusEffect)>, time: Res<Time>) {
     for (mut health, status) in query.iter_mut() {
         match &status.effect_type {
             StatusEffectType::Poison(damage_per_second) => {
@@ -131,8 +131,8 @@ pub fn apply_damage_modifiers(
                 health.current -= damage_per_second * time.delta_secs();
             }
             StatusEffectType::Regeneration(heal_per_second) => {
-                health.current = (health.current + heal_per_second * time.delta_secs())
-                    .min(health.maximum);
+                health.current =
+                    (health.current + heal_per_second * time.delta_secs()).min(health.maximum);
             }
             _ => {}
         }

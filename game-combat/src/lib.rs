@@ -3,41 +3,39 @@
 
 use bevy::prelude::*;
 
-pub mod states;
 pub mod components;
-pub mod systems;
-pub mod effects;
-pub mod xp;
-pub mod targeting;
 pub mod damage;
-pub mod plugin;
-pub mod visuals;
+pub mod effects;
 pub mod physics_integration;
+pub mod plugin;
+pub mod states;
+pub mod systems;
+pub mod targeting;
+pub mod visuals;
+pub mod xp;
 
 // Re-export main types
-pub use states::*;
 pub use components::*;
-pub use systems::*;
-pub use effects::*;
-pub use xp::*;
-pub use targeting::*;
 pub use damage::*;
+pub use effects::*;
 pub use plugin::CombatPlugin;
+pub use states::*;
+pub use systems::*;
+pub use targeting::*;
 pub use visuals::*;
-pub use physics_integration::*;
+pub use xp::*;
+// physics_integration module is currently disabled
 
 /// The main combat plugin that integrates all combat systems
 pub struct GameCombatPlugin;
 
 impl Plugin for GameCombatPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_plugins(CombatPlugin)
+        app.add_plugins(CombatPlugin)
             .add_plugins(TargetingPlugin)
             .add_plugins(DamagePlugin)
             .add_plugins(EffectsPlugin)
             .add_plugins(XPPlugin)
             .add_plugins(CombatVisualsPlugin);
-
     }
 }

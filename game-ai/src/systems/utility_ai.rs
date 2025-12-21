@@ -77,7 +77,7 @@ impl ResponseCurve {
             ResponseCurve::Sigmoid => {
                 let k = 10.0; // Steepness
                 1.0 / (1.0 + (-k * (normalized - 0.5)).exp())
-            },
+            }
             ResponseCurve::Custom(func) => func(normalized),
         }
     }
@@ -169,7 +169,11 @@ impl UtilityAI {
         }
 
         // Sort by score (highest first)
-        scores.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Less));
+        scores.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Less)
+        });
         scores
     }
 
@@ -177,10 +181,11 @@ impl UtilityAI {
         let scores = self.evaluate_actions(context);
 
         if let Some(best) = scores.first()
-            && best.score > 0.0 {
-                self.current_action = Some(best.action_index);
-                return self.actions.get(best.action_index);
-            }
+            && best.score > 0.0
+        {
+            self.current_action = Some(best.action_index);
+            return self.actions.get(best.action_index);
+        }
 
         None
     }
@@ -321,7 +326,7 @@ pub fn utility_ai_system(
         let context = UtilityContext {
             health_percentage: 1.0, // Would get from health component
             resource_amount: 100.0, // Would get from resource component
-            enemy_distance: 50.0, // Would get from nearby enemy detection
+            enemy_distance: 50.0,   // Would get from nearby enemy detection
             allied_unit_count: 1.0, // Would count nearby allied units
             time_elapsed: current_time,
             custom_values: std::collections::HashMap::new(),
@@ -336,40 +341,40 @@ pub fn utility_ai_system(
                         target: None, // Would need target detection
                         aggression_level: 0.8,
                     });
-                },
+                }
                 UtilityActionType::Defend => {
                     commands.entity(entity).insert(crate::DefendBehavior {
                         defend_position: transform.translation,
                         patrol_radius: 10.0,
                     });
-                },
+                }
                 UtilityActionType::Gather => {
                     commands.entity(entity).insert(crate::GatheringBehavior {
                         target_resource: None, // Would need resource detection
                         gathering_rate: 1.0,
                     });
-                },
+                }
                 UtilityActionType::Build => {
                     // Add building behavior when we have building system
-                },
+                }
                 UtilityActionType::Explore => {
                     // Add exploration behavior
-                },
+                }
                 UtilityActionType::Retreat => {
                     commands.entity(entity).insert(crate::RetreatBehavior {
                         safe_position: Some(transform.translation + Vec3::new(-20.0, 0.0, -20.0)),
                         retreat_threshold: 0.3,
                     });
-                },
+                }
                 UtilityActionType::Trade => {
                     // Add trade behavior when we have trade system
-                },
+                }
                 UtilityActionType::Research => {
                     // Add research behavior when we have research system
-                },
+                }
                 UtilityActionType::Custom(_) => {
                     // Handle custom action types
-                },
+                }
             }
         }
     }

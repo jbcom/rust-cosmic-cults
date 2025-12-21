@@ -1,5 +1,5 @@
+use crate::{Formation, FormationType, Leader, MovementPath, MovementTarget, Selected, Unit};
 use bevy::prelude::*;
-use crate::{Unit, Selected, MovementTarget, MovementPath, Formation, FormationType, Leader};
 #[cfg(feature = "web")]
 use web_sys::console;
 
@@ -11,7 +11,9 @@ pub fn formation_system(
     if selection_state.selected_entities.len() > 1 {
         // Apply formation spacing when multiple units are selected
         let formation_spacing = 2.0;
-        let units_per_row = (selection_state.selected_entities.len() as f32).sqrt().ceil() as usize;
+        let units_per_row = (selection_state.selected_entities.len() as f32)
+            .sqrt()
+            .ceil() as usize;
 
         for (i, (mut target, transform, mut formation)) in unit_query.iter_mut().enumerate() {
             if !target.reached {
@@ -20,7 +22,7 @@ pub fn formation_system(
                     &formation.formation_type,
                     i,
                     selection_state.selected_entities.len(),
-                    formation.spacing
+                    formation.spacing,
                 );
 
                 // Apply formation offset to movement target
@@ -36,16 +38,20 @@ pub fn formation_system(
 
 // Advanced formation system with leader-based formations
 pub fn leader_formation_system(
-    mut unit_query: Query<(&mut MovementTarget, &Transform, &mut Formation, &Unit), Without<Leader>>,
+    mut unit_query: Query<
+        (&mut MovementTarget, &Transform, &mut Formation, &Unit),
+        Without<Leader>,
+    >,
     leader_query: Query<(&Transform, &Leader), With<Leader>>,
     selection_state: Res<crate::SelectionState>,
 ) {
     // Find selected leader if any
-    let selected_leader = leader_query.iter()
-        .find(|(_, leader)|
-            selection_state.selected_entities.iter()
-                .any(|entity| leader_query.get(*entity).is_ok())
-        );
+    let selected_leader = leader_query.iter().find(|(_, leader)| {
+        selection_state
+            .selected_entities
+            .iter()
+            .any(|entity| leader_query.get(*entity).is_ok())
+    });
 
     if let Some((leader_transform, leader)) = selected_leader {
         // Apply leader-centered formation
@@ -58,7 +64,7 @@ pub fn leader_formation_system(
                     &formation.formation_type,
                     formation_index,
                     formation.spacing,
-                    leader_transform.translation
+                    leader_transform.translation,
                 );
 
                 target.x = leader_transform.translation.x + offset.x;
@@ -116,11 +122,11 @@ fn calculate_formation_offset(
             // Horizontal line formation
             let center_offset = (total_units - 1) as f32 * spacing / 2.0;
             Vec2::new(index as f32 * spacing - center_offset, 0.0)
-        },
+        }
         FormationType::Column => {
             // Vertical column formation
             Vec2::new(0.0, index as f32 * spacing)
-        },
+        }
         FormationType::Box => {
             // Box/grid formation
             let units_per_row = (total_units as f32).sqrt().ceil() as usize;
@@ -132,19 +138,21 @@ fn calculate_formation_offset(
             let y = row as f32 * spacing;
 
             Vec2::new(x, y)
-        },
+        }
         FormationType::Wedge => {
             // V-shaped wedge formation
             let row = ((index as f32 * 2.0).sqrt()).floor() as usize;
             let pos_in_row = index - (row * (row + 1)) / 2;
 
-            let x = if row == 0 { 0.0 } else {
+            let x = if row == 0 {
+                0.0
+            } else {
                 (pos_in_row as f32 - row as f32 / 2.0) * spacing
             };
             let y = row as f32 * spacing;
 
             Vec2::new(x, y)
-        },
+        }
         FormationType::Circle => {
             // Circular formation
             if total_units == 1 {
@@ -154,7 +162,7 @@ fn calculate_formation_offset(
                 let radius = spacing * 2.0; // Adjust radius based on spacing
                 Vec2::new(angle.cos() * radius, angle.sin() * radius)
             }
-        },
+        }
     }
 }
 
@@ -169,13 +177,13 @@ fn calculate_leader_formation_offset(
         FormationType::Line => {
             // Line behind the leader
             Vec2::new((index as f32 - 2.0) * spacing, -spacing * 2.0)
-        },
+        }
         FormationType::Circle => {
             // Circle around the leader
             let angle = (index as f32 / 8.0) * 2.0 * std::f32::consts::PI; // Assume max 8 units in circle
             let radius = spacing * 3.0;
             Vec2::new(angle.cos() * radius, angle.sin() * radius)
-        },
+        }
         _ => {
             // Default to box formation around leader
             let units_per_side = 3; // 3x3 grid around leader
@@ -186,7 +194,7 @@ fn calculate_leader_formation_offset(
             let y = (row as f32 - 1.0) * spacing;
 
             Vec2::new(x, y)
-        },
+        }
     }
 }
 
@@ -203,7 +211,7 @@ pub fn formation_maintenance_system(
             let desired_position = Vec3::new(
                 target.x + formation.position_in_formation.x,
                 transform.translation.y,
-                target.y + formation.position_in_formation.y
+                target.y + formation.position_in_formation.y,
             );
 
             let direction = desired_position - transform.translation;
@@ -218,7 +226,8 @@ pub fn formation_maintenance_system(
                 // Smooth rotation towards movement direction
                 if direction.length() > 0.01 {
                     let look_direction = direction.normalize();
-                    let target_rotation = Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
+                    let target_rotation =
+                        Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
                     transform.rotation = transform.rotation.slerp(target_rotation, 3.0 * dt);
                 }
             } else {
@@ -249,7 +258,9 @@ pub fn formation_spacing_system(
             formation.spacing = (formation.spacing + spacing_change).max(1.0); // Minimum spacing of 1.0
 
             #[cfg(feature = "web")]
-            console::log_1(&format!("Formation spacing changed to {:.1}", formation.spacing).into());
+            console::log_1(
+                &format!("Formation spacing changed to {:.1}", formation.spacing).into(),
+            );
         }
     }
 }

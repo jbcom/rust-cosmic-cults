@@ -1,17 +1,20 @@
 // Visual effects and feedback systems for combat
+use crate::visuals::ParticleType;
 use bevy::prelude::*;
 
 pub struct EffectsPlugin;
 
 impl Plugin for EffectsPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, (
+        app.add_systems(
+            Update,
+            (
                 damage_number_system,
                 health_bar_system,
                 death_effect_system,
                 combat_particle_system,
-            ));
+            ),
+        );
     }
 }
 
@@ -117,10 +120,7 @@ pub fn death_effect_system(
 }
 
 /// System to handle combat particle effects
-pub fn combat_particle_system(
-    mut gizmos: Gizmos,
-    query: Query<(&Transform, &CombatParticle)>,
-) {
+pub fn combat_particle_system(mut gizmos: Gizmos, query: Query<(&Transform, &CombatParticle)>) {
     for (transform, particle) in query.iter() {
         // Simple particle visualization using circle instead of sphere
         gizmos.circle_2d(
@@ -140,13 +140,7 @@ pub struct CombatParticle {
     pub lifetime: f32,
 }
 
-#[derive(Clone)]
-pub enum ParticleType {
-    Blood,
-    Spark,
-    Magic,
-    Smoke,
-}
+// Note: ParticleType is defined in visuals.rs to avoid duplication
 
 /// Spawn a damage number at a position
 pub fn spawn_damage_number(
@@ -175,11 +169,7 @@ pub fn spawn_damage_number(
 }
 
 /// Spawn a death effect
-pub fn spawn_death_effect(
-    commands: &mut Commands,
-    position: Vec3,
-    effect_type: DeathEffectType,
-) {
+pub fn spawn_death_effect(commands: &mut Commands, position: Vec3, effect_type: DeathEffectType) {
     commands.spawn((
         DeathEffect {
             effect_type,

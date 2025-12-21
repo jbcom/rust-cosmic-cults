@@ -1,6 +1,6 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 #[cfg(feature = "web")]
 use web_sys::console;
 
@@ -19,7 +19,6 @@ impl Health {
         }
     }
 }
-
 
 // Core unit component - the main entity type for units
 #[derive(Component, Clone, Debug)]

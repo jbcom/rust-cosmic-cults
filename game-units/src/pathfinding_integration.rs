@@ -1,8 +1,7 @@
+use crate::{Team, Unit};
 use bevy::prelude::*;
-use crate::{Unit, Team};
 use game_physics::{
-    MovementController, MovementCommandEvent, MovementCommand,
-    Velocity, AABB, Obstacle
+    AABB, MovementCommand, MovementCommandEvent, MovementController, Obstacle, Velocity,
 };
 use game_world::{GameMap, PathfindingGrid, find_path};
 
@@ -41,10 +40,13 @@ pub fn pathfinding_request_system(
                         controller.is_moving = !controller.waypoints.is_empty();
 
                         #[cfg(feature = "web")]
-                        web_sys::console::log_1(&format!(
-                            "Path found with {} waypoints for unit",
-                            controller.waypoints.len()
-                        ).into());
+                        web_sys::console::log_1(
+                            &format!(
+                                "Path found with {} waypoints for unit",
+                                controller.waypoints.len()
+                            )
+                            .into(),
+                        );
                     } else {
                         // No path found, try direct movement
                         controller.target_position = Some(*position);
@@ -53,7 +55,9 @@ pub fn pathfinding_request_system(
                         controller.is_moving = true;
 
                         #[cfg(feature = "web")]
-                        web_sys::console::log_1(&"No path found, attempting direct movement".into());
+                        web_sys::console::log_1(
+                            &"No path found, attempting direct movement".into(),
+                        );
                     }
                 }
             }
@@ -74,6 +78,7 @@ pub fn pathfinding_request_system(
 }
 
 /// System to update pathfinding grid based on obstacles
+#[allow(clippy::type_complexity)]
 pub fn update_pathfinding_obstacles(
     obstacle_query: Query<&Transform, (With<AABB>, With<Obstacle>, Without<Unit>)>,
     mut pathfinding_grid: ResMut<PathfindingGrid>,
@@ -107,6 +112,7 @@ pub fn update_pathfinding_obstacles(
 }
 
 /// Dynamic pathfinding that recalculates when obstacles are detected
+#[allow(clippy::type_complexity)]
 pub fn dynamic_pathfinding_system(
     mut unit_query: Query<(Entity, &Transform, &mut MovementController, &Velocity), With<Unit>>,
     obstacle_query: Query<&Transform, (With<AABB>, With<Obstacle>, Without<Unit>)>,
@@ -127,33 +133,36 @@ pub fn dynamic_pathfinding_system(
             let mut path_blocked = false;
             for obstacle_transform in obstacle_query.iter() {
                 let distance = obstacle_transform.translation.distance(next_waypoint);
-                if distance < 2.0 { // Obstacle too close to waypoint
+                if distance < 2.0 {
+                    // Obstacle too close to waypoint
                     path_blocked = true;
                     break;
                 }
             }
 
             // If path is blocked and velocity is very low (stuck), recalculate
-            if path_blocked && velocity.linear.length() < 0.5 {
-                if let Some(final_target) = controller.waypoints.last() {
-                    // Request new path calculation
-                    movement_events.write(MovementCommandEvent {
-                        entity,
-                        command: MovementCommand::MoveTo {
-                            position: *final_target,
-                            speed: controller.max_speed,
-                        },
-                    });
+            if path_blocked
+                && velocity.linear.length() < 0.5
+                && let Some(final_target) = controller.waypoints.last()
+            {
+                // Request new path calculation
+                movement_events.write(MovementCommandEvent {
+                    entity,
+                    command: MovementCommand::MoveTo {
+                        position: *final_target,
+                        speed: controller.max_speed,
+                    },
+                });
 
-                    #[cfg(feature = "web")]
-                    web_sys::console::log_1(&"Path blocked, recalculating route".into());
-                }
+                #[cfg(feature = "web")]
+                web_sys::console::log_1(&"Path blocked, recalculating route".into());
             }
         }
     }
 }
 
 /// Formation pathfinding for group movement
+#[allow(clippy::type_complexity)]
 pub fn formation_pathfinding_system(
     selected_units: Query<(Entity, &Transform), (With<Unit>, With<crate::Selected>)>,
     pathfinding_grid: Res<PathfindingGrid>,
@@ -188,7 +197,11 @@ pub fn grid_to_world(grid_pos: (i32, i32), tile_size: f32) -> Vec3 {
 }
 
 /// Smooth path by removing unnecessary waypoints
-pub fn smooth_path(waypoints: Vec<Vec3>, pathfinding_grid: &PathfindingGrid, tile_size: f32) -> Vec<Vec3> {
+pub fn smooth_path(
+    waypoints: Vec<Vec3>,
+    pathfinding_grid: &PathfindingGrid,
+    tile_size: f32,
+) -> Vec<Vec3> {
     if waypoints.len() <= 2 {
         return waypoints;
     }
@@ -235,7 +248,12 @@ fn is_path_clear(
         let pos = start.lerp(end, t);
         let grid_pos = world_to_grid(pos, tile_size);
 
-        if !pathfinding_grid.walkable.get(&grid_pos).copied().unwrap_or(false) {
+        if !pathfinding_grid
+            .walkable
+            .get(&grid_pos)
+            .copied()
+            .unwrap_or(false)
+        {
             return false;
         }
     }
@@ -252,12 +270,15 @@ pub struct PathfindingIntegrationPlugin;
 
 impl Plugin for PathfindingIntegrationPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, (
+        app.add_systems(
+            Update,
+            (
                 pathfinding_request_system,
                 update_pathfinding_obstacles,
                 dynamic_pathfinding_system,
                 formation_pathfinding_system,
-            ).chain());
+            )
+                .chain(),
+        );
     }
 }

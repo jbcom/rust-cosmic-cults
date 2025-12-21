@@ -1,10 +1,9 @@
-use tracing::info;
 // Visual effects system for combat
-use bevy::prelude::*;
-use bevy::pbr::StandardMaterial;
-use bevy::render::alpha::AlphaMode;
 use crate::components::*;
 use crate::damage::{DamageEvent, DeathEvent};
+use bevy::pbr::StandardMaterial;
+use bevy::prelude::*;
+use bevy::render::alpha::AlphaMode;
 
 // Visual effect components
 #[derive(Component)]
@@ -59,14 +58,14 @@ pub struct BuffVisualIndicator {
 
 #[derive(Clone, Debug)]
 pub enum ParticleType {
-    Blood,      // Crimson Covenant
-    Water,      // Deep Ones
-    Void,       // Void Seekers
-    Fire,       // Burn effect
-    Ice,        // Freeze effect
-    Poison,     // Poison effect
-    Holy,       // Healing effect
-    Explosion,  // Death/AOE
+    Blood,     // Crimson Covenant
+    Water,     // Deep Ones
+    Void,      // Void Seekers
+    Fire,      // Burn effect
+    Ice,       // Freeze effect
+    Poison,    // Poison effect
+    Holy,      // Healing effect
+    Explosion, // Death/AOE
 }
 
 // Plugin for combat visuals
@@ -74,22 +73,24 @@ pub struct CombatVisualsPlugin;
 
 impl Plugin for CombatVisualsPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_message::<SpawnVisualDamageNumberEvent>()
+        app.add_message::<SpawnVisualDamageNumberEvent>()
             .add_message::<SpawnVisualDeathEffectEvent>()
-            .add_systems(Update, (
-                spawn_damage_numbers,
-                update_damage_numbers,
-                apply_hit_flash,
-                update_hit_flash,
-                handle_death_effects,
-                update_death_effects,
-                update_combat_particles,
-                update_projectile_trails,
-                update_shield_effects,
-                animate_buff_indicators,
-                cleanup_expired_effects,
-            ));
+            .add_systems(
+                Update,
+                (
+                    spawn_damage_numbers,
+                    update_damage_numbers,
+                    apply_hit_flash,
+                    update_hit_flash,
+                    handle_death_effects,
+                    update_death_effects,
+                    update_combat_particles,
+                    update_projectile_trails,
+                    update_shield_effects,
+                    animate_buff_indicators,
+                    cleanup_expired_effects,
+                ),
+            );
     }
 }
 
@@ -119,7 +120,7 @@ pub fn spawn_damage_numbers(
 ) {
     for event in damage_events.read() {
         if let Ok(transform) = transform_query.get(event.target) {
-            let color = get_damage_color(&event.damage_type, event.is_critical);
+            let _color = get_damage_color(&event.damage_type, event.is_critical);
             let size = if event.is_critical { 0.5 } else { 0.3 };
 
             // Spawn damage number entity (using mesh-based text for 3D)
@@ -188,7 +189,8 @@ pub fn update_damage_numbers(
             }
 
             // Add mesh once at the start
-            if damage_num.lifetime > 1.4 { // Only add mesh once at the start
+            if damage_num.lifetime > 1.4 {
+                // Only add mesh once at the start
                 let color = get_damage_color(&damage_num.damage_type, damage_num.is_critical);
                 commands.entity(entity).insert((
                     Mesh3d(meshes.add(Sphere::new(0.3))),
@@ -209,7 +211,7 @@ pub fn apply_hit_flash(
     mut material_query: Query<(&MeshMaterial3d<StandardMaterial>, &HitFlash), Added<HitFlash>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (mat_handle, flash) in material_query.iter_mut() {
+    for (mat_handle, _flash) in material_query.iter_mut() {
         if let Some(material) = materials.get_mut(&mat_handle.0) {
             // Store original color and apply red tint
             material.base_color = Color::srgb(1.0, 0.2, 0.2);
@@ -290,7 +292,11 @@ pub fn handle_death_effects(
 pub fn update_death_effects(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(Entity, &mut VisualDeathEffect, &MeshMaterial3d<StandardMaterial>)>,
+    mut query: Query<(
+        Entity,
+        &mut VisualDeathEffect,
+        &MeshMaterial3d<StandardMaterial>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mut death_effect, mat_handle) in query.iter_mut() {
@@ -360,7 +366,11 @@ pub fn update_projectile_trails(
 /// Update shield visual effects
 pub fn update_shield_effects(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut ShieldEffect, &MeshMaterial3d<StandardMaterial>)>,
+    mut query: Query<(
+        &mut Transform,
+        &mut ShieldEffect,
+        &MeshMaterial3d<StandardMaterial>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (mut transform, mut shield, mat_handle) in query.iter_mut() {
@@ -373,7 +383,8 @@ pub fn update_shield_effects(
 
             if let Some(material) = materials.get_mut(&mat_handle.0) {
                 let intensity = shield.hit_time / 0.5; // 0.5 second hit effect
-                material.emissive = LinearRgba::rgb(0.5 * intensity, 0.8 * intensity, 1.0 * intensity);
+                material.emissive =
+                    LinearRgba::rgb(0.5 * intensity, 0.8 * intensity, 1.0 * intensity);
             }
         } else {
             // Normal shield animation
@@ -415,9 +426,9 @@ pub fn animate_buff_indicators(
 
 /// Clean up expired visual effects
 pub fn cleanup_expired_effects(
-    mut commands: Commands,
-    particles: Query<Entity, With<VisualCombatParticle>>,
-    damage_nums: Query<Entity, With<VisualDamageNumber>>,
+    _commands: Commands,
+    _particles: Query<Entity, With<VisualCombatParticle>>,
+    _damage_nums: Query<Entity, With<VisualDamageNumber>>,
 ) {
     // This is handled in individual update systems, but we could add additional cleanup here
 }
@@ -510,9 +521,9 @@ fn spawn_death_particles(
 pub fn create_projectile_trail(
     commands: &mut Commands,
     projectile_entity: Entity,
-    damage_type: &DamageType,
+    _damage_type: &DamageType,
 ) -> Entity {
-    let trail = commands
+    commands
         .spawn((
             Name::new("ProjectileTrail"),
             ProjectileTrail {
@@ -521,9 +532,7 @@ pub fn create_projectile_trail(
                 max_positions: 10,
             },
         ))
-        .id();
-
-    trail
+        .id()
 }
 
 /// Create a shield bubble effect
@@ -563,11 +572,19 @@ pub fn create_buff_indicator(
     effect_type: StatusEffectType,
 ) -> Entity {
     let (color, mesh) = match effect_type {
-        StatusEffectType::AttackSpeed(_) => (Color::srgb(1.0, 0.5, 0.0), meshes.add(Torus::new(0.1, 0.3))),
-        StatusEffectType::MovementSpeed(_) => (Color::srgb(0.0, 1.0, 0.5), meshes.add(Cylinder::new(0.2, 0.5))),
+        StatusEffectType::AttackSpeed(_) => {
+            (Color::srgb(1.0, 0.5, 0.0), meshes.add(Torus::new(0.1, 0.3)))
+        }
+        StatusEffectType::MovementSpeed(_) => (
+            Color::srgb(0.0, 1.0, 0.5),
+            meshes.add(Cylinder::new(0.2, 0.5)),
+        ),
         StatusEffectType::Poison(_) => (Color::srgb(0.0, 0.8, 0.0), meshes.add(Sphere::new(0.2))),
         StatusEffectType::Burn(_) => (Color::srgb(1.0, 0.3, 0.0), meshes.add(Sphere::new(0.25))),
-        StatusEffectType::Freeze => (Color::srgb(0.5, 0.8, 1.0), meshes.add(Cuboid::new(0.3, 0.3, 0.3))),
+        StatusEffectType::Freeze => (
+            Color::srgb(0.5, 0.8, 1.0),
+            meshes.add(Cuboid::new(0.3, 0.3, 0.3)),
+        ),
         _ => (Color::WHITE, meshes.add(Sphere::new(0.2))),
     };
 
@@ -648,5 +665,6 @@ mod rand {
             (seed as f32) / (u32::MAX as f32)
         }
     }
-}impl bevy::prelude::Message for SpawnVisualDamageNumberEvent {}
+}
+impl bevy::prelude::Message for SpawnVisualDamageNumberEvent {}
 impl bevy::prelude::Message for SpawnVisualDeathEffectEvent {}
