@@ -203,34 +203,23 @@ pub fn target_validation_system(mut query: Query<&mut TargetSelector>) {
     }
 }
 
-/// Helper functions for target selection
+// Helper functions for target selection
 
 /// Get nearest enemy from a position
 /// Note: This is a stub - games must implement with their own entity queries
-pub fn get_nearest_enemy(
-    _position: Vec3,
-    _team_id: u32,
-) -> Option<Entity> {
+pub fn get_nearest_enemy(_position: Vec3, _team_id: u32) -> Option<Entity> {
     None
 }
 
 /// Get weakest enemy in range
 /// Note: This is a stub - games must implement with their own entity queries
-pub fn get_weakest_enemy(
-    _position: Vec3,
-    _team_id: u32,
-    _max_range: f32,
-) -> Option<Entity> {
+pub fn get_weakest_enemy(_position: Vec3, _team_id: u32, _max_range: f32) -> Option<Entity> {
     None
 }
 
 /// Get all enemies in range
 /// Note: This is a stub - games must implement with their own entity queries
-pub fn get_enemies_in_range(
-    _position: Vec3,
-    _team_id: u32,
-    _range: f32,
-) -> Vec<Entity> {
+pub fn get_enemies_in_range(_position: Vec3, _team_id: u32, _range: f32) -> Vec<Entity> {
     Vec::new()
 }
 

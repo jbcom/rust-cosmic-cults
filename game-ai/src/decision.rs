@@ -420,12 +420,12 @@ pub fn goal_execution_system(
                 }
 
                 StrategicGoal::GatherResources => {
-                    commands.entity(entity).insert(
-                        crate::game_behaviors::GatheringBehavior {
+                    commands
+                        .entity(entity)
+                        .insert(crate::game_behaviors::GatheringBehavior {
                             target_resource: None,
                             gathering_rate: 1.0,
-                        },
-                    );
+                        });
                 }
 
                 StrategicGoal::ExploreTerrain(target) => {

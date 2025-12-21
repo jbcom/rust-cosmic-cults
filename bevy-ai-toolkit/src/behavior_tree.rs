@@ -104,7 +104,8 @@ impl Blackboard {
     }
 
     pub fn set_entity(&mut self, key: String, value: Entity) {
-        self.values.insert(key, BlackboardValue::Entity(value.to_bits()));
+        self.values
+            .insert(key, BlackboardValue::Entity(value.to_bits()));
     }
 }
 

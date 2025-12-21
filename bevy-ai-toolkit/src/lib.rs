@@ -56,9 +56,9 @@ impl Plugin for BevyAIToolkitPlugin {
 
 /// Prelude module for convenient imports
 pub mod prelude {
+    pub use crate::BevyAIToolkitPlugin;
     pub use crate::behavior_tree::*;
     pub use crate::state_machine::*;
     pub use crate::targeting::*;
     pub use crate::utility_ai::*;
-    pub use crate::BevyAIToolkitPlugin;
 }

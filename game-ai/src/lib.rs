@@ -29,7 +29,7 @@ pub use cult_profiles::{
 };
 pub use decision::*;
 pub use game_behaviors::{AttackBehavior, DefendBehavior, GatheringBehavior, RetreatBehavior};
-pub use states::{StateTransitionTrigger};
+pub use states::StateTransitionTrigger;
 pub use systems::ai_execution::{AICommandEvent, AIGlobalState, AIPerceptionEvent};
 pub use systems::decision_making::AIDecisionMaker;
 pub use types::{AICoordination, AIMessage, AIRole};
@@ -129,13 +129,17 @@ impl Plugin for GameAIPlugin {
 }
 
 // Condition to check if any AI entities exist
+// Note: We check for both toolkit types (from bevy_ai_toolkit::prelude) and
+// game-specific types (from states/behaviors modules) since they are distinct Component types
 #[allow(clippy::type_complexity)]
 fn any_ai_entities_exist(
     ai_query: Query<
         (),
         Or<(
-            With<AIStateMachine>,
-            With<BehaviorTree>,
+            With<AIStateMachine>,                 // Toolkit state machine
+            With<crate::states::AIStateMachine>,  // Game-specific state machine
+            With<BehaviorTree>,                   // Toolkit behavior tree
+            With<crate::behaviors::BehaviorTree>, // Game-specific behavior tree
             With<UtilityAI>,
             With<AIDecisionMaker>,
             With<AICoordination>,
@@ -197,38 +201,10 @@ pub struct CoordinatedBehavior {
 // AI action execution system that translates AI behaviors into physics commands
 fn ai_action_execution_system(
     mut movement_events: MessageWriter<MovementCommandEvent>,
-    gathering_query: Query<
-        (
-            Entity,
-            &GatheringBehavior,
-            &Transform,
-        ),
-        Added<GatheringBehavior>,
-    >,
-    attack_query: Query<
-        (
-            Entity,
-            &AttackBehavior,
-            &Transform,
-        ),
-        Added<AttackBehavior>,
-    >,
-    defend_query: Query<
-        (
-            Entity,
-            &DefendBehavior,
-            &Transform,
-        ),
-        Added<DefendBehavior>,
-    >,
-    retreat_query: Query<
-        (
-            Entity,
-            &RetreatBehavior,
-            &Transform,
-        ),
-        Added<RetreatBehavior>,
-    >,
+    gathering_query: Query<(Entity, &GatheringBehavior, &Transform), Added<GatheringBehavior>>,
+    attack_query: Query<(Entity, &AttackBehavior, &Transform), Added<AttackBehavior>>,
+    defend_query: Query<(Entity, &DefendBehavior, &Transform), Added<DefendBehavior>>,
+    retreat_query: Query<(Entity, &RetreatBehavior, &Transform), Added<RetreatBehavior>>,
     mut commands: Commands,
 ) {
     // Handle gathering behavior - move to resource location
@@ -321,7 +297,7 @@ impl GameAIPlugin {
             .spawn((
                 Transform::from_translation(position),
                 GlobalTransform::default(),
-                AIStateMachine::default(), // Now from toolkit
+                crate::states::AIStateMachine::default(), // Use game-specific state machine
                 AICoordination {
                     team_id: 1,
                     role: ai_type.clone(),
@@ -342,7 +318,7 @@ impl GameAIPlugin {
     pub fn spawn_behavior_tree_ai(
         commands: &mut Commands,
         position: Vec3,
-        tree: BehaviorTree, // Now from toolkit
+        tree: crate::behaviors::BehaviorTree, // Use game-specific behavior tree
     ) -> Entity {
         commands
             .spawn((

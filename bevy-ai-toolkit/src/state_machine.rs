@@ -295,7 +295,11 @@ mod tests {
     #[test]
     fn test_add_transition() {
         let mut sm = AIStateMachine::new();
-        sm.add_transition(AIState::Idle, AITransition::Custom("test".to_string()), AIState::Scouting);
+        sm.add_transition(
+            AIState::Idle,
+            AITransition::Custom("test".to_string()),
+            AIState::Scouting,
+        );
         assert!(sm.transition(AITransition::Custom("test".to_string())));
         assert_eq!(sm.current_state, AIState::Scouting);
     }
