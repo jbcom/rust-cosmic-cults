@@ -1,224 +1,69 @@
-# Rust Copilot Instructions
+# Copilot Instructions
 
-## Environment Setup
+> **Repository-specific instructions should be in `.github/copilot-instructions-local.md`**
+> This file provides common patterns. Local instructions take precedence.
 
-### Toolchain
-```bash
-# Install Rust via rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+## Before Starting Any Task
 
-# Ensure stable toolchain
-rustup default stable
+1. **Read the issue/PR description completely**
+2. **Check for existing patterns** in the codebase before creating new ones
+3. **Run the test suite** before and after changes
+4. **Follow the repository's established conventions**
 
-# Add development components
-rustup component add clippy rustfmt rust-analyzer
+## Code Quality Requirements
+
+### All Changes Must:
+- [ ] Pass linting (`npm run lint` / `uv run ruff check`)
+- [ ] Pass tests (`npm test` / `uv run pytest`)
+- [ ] Include tests for new functionality
+- [ ] Follow existing code style and patterns
+- [ ] Have clear, descriptive commit messages
+
+### Commit Message Format
+```
+<type>(<scope>): <description>
+
+Types: feat, fix, docs, style, refactor, test, chore
 ```
 
-### Project Setup
-```bash
-# Install dependencies
-cargo build
-
-# Verify setup
-cargo test
-```
-
-## Development Commands
-
-### Testing (ALWAYS run tests)
-```bash
-# Run all tests
-cargo test
-
-# Run specific test
-cargo test test_name
-
-# Run tests with output
-cargo test -- --nocapture
-
-# Run doc tests only
-cargo test --doc
-
-# Run ignored tests
-cargo test -- --ignored
-```
-
-### Linting & Formatting
-```bash
-# Format code
-cargo fmt
-
-# Check formatting (CI mode)
-cargo fmt -- --check
-
-# Run clippy linter
-cargo clippy
-
-# Fail on warnings (CI mode)
-cargo clippy -- -D warnings
-```
-
-### Building
-```bash
-# Debug build
-cargo build
-
-# Release build
-cargo build --release
-
-# Check without full build
-cargo check
-```
-
-### Documentation
-```bash
-# Generate and open docs
-cargo doc --no-deps --open
-
-# With private items
-cargo doc --no-deps --document-private-items
-```
-
-## Code Patterns
+## Common Patterns
 
 ### Error Handling
-```rust
-// Define custom error types
-#[derive(Debug, thiserror::Error)]
-pub enum ProcessError {
-    #[error("invalid input: {0}")]
-    InvalidInput(String),
-    
-    #[error("operation timed out")]
-    Timeout,
-    
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-}
+- Always handle errors explicitly
+- Log errors with context
+- Throw typed errors when possible
 
-// Use Result with ? operator
-fn process(input: &str) -> Result<Output, ProcessError> {
-    let validated = validate(input)?;
-    let transformed = transform(validated)?;
-    Ok(Output::new(transformed))
-}
-```
+### Testing
+- Write tests FIRST when fixing bugs (TDD)
+- Test edge cases, not just happy paths
+- Mock external dependencies
 
-### Async Patterns
-```rust
-use tokio;
+### Documentation
+- Update README if adding features
+- Add JSDoc/docstrings to public APIs
+- Include usage examples
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let result = fetch_data("https://api.example.com").await?;
-    println!("{:?}", result);
-    Ok(())
-}
+## Issue Resolution Workflow
 
-async fn fetch_data(url: &str) -> Result<Response, reqwest::Error> {
-    let client = reqwest::Client::new();
-    client.get(url).send().await?.json().await
-}
-```
+1. **Understand**: Read issue, check related code
+2. **Reproduce**: If bug, write failing test first
+3. **Implement**: Make minimal changes to fix/add feature
+4. **Test**: Ensure all tests pass
+5. **Document**: Update docs if needed
+6. **Commit**: Clear message referencing issue
 
-### Testing Patterns
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
+## What NOT To Do
 
-    #[test]
-    fn test_process_valid_input() {
-        let result = process("valid").unwrap();
-        assert_eq!(result.value, "expected");
-    }
+- ❌ Don't refactor unrelated code
+- ❌ Don't add dependencies without justification
+- ❌ Don't skip tests
+- ❌ Don't change formatting of untouched code
+- ❌ Don't make breaking changes without discussion
 
-    #[test]
-    fn test_process_invalid_input() {
-        let result = process("");
-        assert!(matches!(result, Err(ProcessError::InvalidInput(_))));
-    }
+## Getting Help
 
-    #[tokio::test]
-    async fn test_async_operation() {
-        let result = async_operation().await.unwrap();
-        assert!(result.success);
-    }
-}
-```
-
-### Builder Pattern
-```rust
-#[derive(Debug, Default)]
-pub struct ClientBuilder {
-    timeout: Option<Duration>,
-    retries: Option<u32>,
-}
-
-impl ClientBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    pub fn retries(mut self, retries: u32) -> Self {
-        self.retries = Some(retries);
-        self
-    }
-
-    pub fn build(self) -> Result<Client, BuildError> {
-        Ok(Client {
-            timeout: self.timeout.unwrap_or(Duration::from_secs(30)),
-            retries: self.retries.unwrap_or(3),
-        })
-    }
-}
-```
-
-## Common Issues
-
-### Borrow Checker Errors
-```rust
-// Clone if ownership is needed
-let owned = borrowed.clone();
-
-// Use references when possible
-fn process(data: &Data) -> Result { ... }
-
-// Use Arc for shared ownership
-use std::sync::Arc;
-let shared = Arc::new(data);
-```
-
-### Lifetime Annotations
-```rust
-// Explicit lifetimes when needed
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-    if x.len() > y.len() { x } else { y }
-}
-
-// Struct with references
-struct Parser<'a> {
-    input: &'a str,
-}
-```
-
-## File Structure
-```
-src/
-├── lib.rs           # Library entry point
-├── main.rs          # Binary entry point
-├── error.rs         # Error types
-├── config.rs        # Configuration
-├── client/          # Module directory
-│   ├── mod.rs       # Module root
-│   └── http.rs      # Submodule
-tests/
-├── integration.rs   # Integration tests
-benches/
-├── benchmark.rs     # Benchmarks
-```
+If blocked:
+1. Check `memory-bank/` for project context
+2. Check `docs/` for architecture decisions
+3. Look at recent PRs for patterns
+4. Ask in the issue for clarification
