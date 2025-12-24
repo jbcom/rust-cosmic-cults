@@ -1,0 +1,19 @@
+[project]
+name = "rust-cosmic-cults-docs"
+version = "0.1.0"
+description = "Documentation for Rust Cosmic Cults"
+dependencies = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=1.0.0",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=1.0.0",
+]
+
+[tool.uv]
+managed = true
