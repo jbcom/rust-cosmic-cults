@@ -1,5 +1,6 @@
 use crate::{Team, Unit};
 use bevy::prelude::*;
+use bevy_combat::prelude::{Health, DamageEvent, DamageType};
 use game_physics::{
     AABB, CollisionEvent, CollisionType, Mass, MovementCommand, MovementCommandEvent,
     MovementController, RaycastEvent, RaycastHit, RaycastResultEvent, SpatialData, TriggerEvent,
@@ -203,37 +204,40 @@ pub fn physics_steering_movement_system(
 pub fn projectile_collision_system(
     mut collision_events: MessageReader<CollisionEvent>,
     projectile_query: Query<&ProjectileMarker>,
-    mut unit_query: Query<&mut Unit>,
+    mut unit_query: Query<&mut Health, With<Unit>>,
+    mut damage_events: MessageWriter<DamageEvent>,
     mut commands: Commands,
 ) {
     for collision_event in collision_events.read() {
         // Check if entity_a is a projectile
         if let Ok(projectile) = projectile_query.get(collision_event.entity_a)
-            && let Ok(mut unit) = unit_query.get_mut(collision_event.entity_b)
+            && let Ok(mut health) = unit_query.get_mut(collision_event.entity_b)
         {
-            // Apply damage
-            unit.health -= projectile.damage;
+            // Apply damage via event
+            damage_events.write(DamageEvent {
+                attacker: projectile.owner,
+                target: collision_event.entity_b,
+                amount: projectile.damage,
+                damage_type: DamageType::Physical,
+                is_critical: false,
+            });
 
             // Despawn projectile
             commands.entity(collision_event.entity_a).despawn();
-
-            #[cfg(feature = "web")]
-            web_sys::console::log_1(
-                &format!("Projectile hit unit for {} damage", projectile.damage).into(),
-            );
         }
 
         // Check reverse case
         if let Ok(projectile) = projectile_query.get(collision_event.entity_b)
-            && let Ok(mut unit) = unit_query.get_mut(collision_event.entity_a)
+            && let Ok(mut health) = unit_query.get_mut(collision_event.entity_a)
         {
-            unit.health -= projectile.damage;
+            damage_events.write(DamageEvent {
+                attacker: projectile.owner,
+                target: collision_event.entity_a,
+                amount: projectile.damage,
+                damage_type: DamageType::Physical,
+                is_critical: false,
+            });
             commands.entity(collision_event.entity_b).despawn();
-
-            #[cfg(feature = "web")]
-            web_sys::console::log_1(
-                &format!("Projectile hit unit for {} damage", projectile.damage).into(),
-            );
         }
     }
 }

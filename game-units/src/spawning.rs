@@ -6,6 +6,7 @@ use crate::{
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
+use bevy_combat::prelude::{Health, CombatStats};
 use game_physics::{
     AABB, CollisionMask, Friction, Mass, MovementController, MovementPath, MovementTarget,
     RigidBodyType, RigidBodyVariant, SpatialData, Velocity,
@@ -146,13 +147,17 @@ pub fn spawn_unit(
             Unit {
                 unit_type: unit_type.to_string(),
                 cult: cult.to_string(),
-                health: 100.0,
-                max_health: 100.0,
                 experience: 0,
                 veteran_tier: 0,
                 attack_damage: 10.0,
                 movement_speed: 5.0,
                 attack_speed: 1.0,
+            },
+            Health::new(100.0),
+            CombatStats {
+                damage: 10.0,
+                attack_speed: 1.0,
+                ..default()
             },
             Team {
                 id: team_id,
@@ -307,8 +312,6 @@ pub fn spawn_leader(
             Leader {
                 name: name.to_string(),
                 cult: cult.to_string(),
-                health: 200.0,
-                max_health: 200.0,
                 shield: 50.0,
                 aura_radius: 15.0,
                 aura_type: aura_type.clone(),
@@ -321,13 +324,17 @@ pub fn spawn_leader(
             Unit {
                 unit_type: "leader".to_string(),
                 cult: cult.to_string(),
-                health: 200.0,
-                max_health: 200.0,
                 experience: 0,
                 veteran_tier: 3,
                 attack_damage: 25.0,
                 movement_speed: 6.0,
                 attack_speed: 1.5,
+            },
+            Health::new(200.0),
+            CombatStats {
+                damage: 25.0,
+                attack_speed: 1.5,
+                ..default()
             },
             Team {
                 id: team_id,
@@ -731,13 +738,17 @@ pub fn spawn_unit_from_template(
             Unit {
                 unit_type: template.unit_type.clone(),
                 cult: cult.to_string(),
-                health: template.base_health,
-                max_health: template.base_health,
                 experience: 0,
                 veteran_tier: 0,
                 attack_damage: template.base_attack,
                 movement_speed: template.base_speed,
                 attack_speed: template.attack_speed,
+            },
+            Health::new(template.base_health),
+            CombatStats {
+                damage: template.base_attack,
+                attack_speed: template.attack_speed,
+                ..default()
             },
             Team {
                 id: team_id,

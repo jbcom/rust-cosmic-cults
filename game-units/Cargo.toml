@@ -21,6 +21,7 @@ bevy = { workspace = true, default-features = false, features = [
 ]}
 
 # Game systems integration
+bevy-combat = { path = "../bevy-combat" }
 game-physics = { path = "../game-physics" }
 game-world = { path = "../game-world" }
 

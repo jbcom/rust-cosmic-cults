@@ -9,8 +9,7 @@ game-physics = { path = "../game-physics" }
 game-assets = { path = "../game-assets" }
 game-world = { path = "../game-world" }
 game-units = { path = "../game-units" }
-game-combat = { path = "../game-combat" }
-game-ai = { path = "../game-ai" }
+cosmic-cults = { path = "../cosmic-cults" }
 
 # Additional dependencies for examples
 rand = { workspace = true }

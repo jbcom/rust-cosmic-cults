@@ -15,9 +15,12 @@ pub struct LeadershipBuilding {
 }
 
 // Defeat condition system - checks if critical leaders have died
-pub fn defeat_condition_system(mut commands: Commands, mut leader_query: Query<&mut Leader>) {
-    for mut leader in leader_query.iter_mut() {
-        if leader.health <= 0.0 && leader.alive && leader.defeat_on_death {
+pub fn defeat_condition_system(
+    mut commands: Commands,
+    mut leader_query: Query<(&mut Leader, &Health)>,
+) {
+    for (mut leader, health) in leader_query.iter_mut() {
+        if health.current <= 0.0 && leader.alive && leader.defeat_on_death {
             leader.alive = false;
 
             #[cfg(feature = "web")]

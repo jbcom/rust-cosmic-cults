@@ -1,14 +1,12 @@
-// Damage calculation and application system
 use crate::components::*;
-use crate::states::Health;
 use bevy::prelude::*;
 
 pub struct DamagePlugin;
 
 impl Plugin for DamagePlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<DamageEvent>()
-            .add_message::<DeathEvent>()
+        app.add_event::<DamageEvent>()
+            .add_event::<DeathEvent>()
             .add_systems(
                 Update,
                 (
@@ -36,29 +34,25 @@ pub struct DeathEvent {
     pub killer: Option<Entity>,
 }
 
-/// Process damage events and apply damage
 pub fn process_damage_events(
-    mut damage_events: MessageReader<DamageEvent>,
+    mut damage_events: EventReader<DamageEvent>,
     mut health_query: Query<&mut Health>,
     combat_stats_query: Query<&CombatStats>,
     mut shield_query: Query<&mut Shield>,
     invulnerable_query: Query<&Invulnerable>,
-    mut death_events: MessageWriter<DeathEvent>,
+    mut death_events: EventWriter<DeathEvent>,
 ) {
     for event in damage_events.read() {
-        // Skip if target is invulnerable
         if invulnerable_query.contains(event.target) {
             continue;
         }
 
-        // Calculate final damage after resistances
         let final_damage = calculate_damage(
             event.amount,
             &event.damage_type,
             combat_stats_query.get(event.target).ok(),
         );
 
-        // Apply damage to shield first, then health
         let remaining_damage = if let Ok(mut shield) = shield_query.get_mut(event.target) {
             apply_shield_damage(&mut shield, final_damage)
         } else {
@@ -85,24 +79,10 @@ fn calculate_damage(
 ) -> f32 {
     if let Some(stats) = target_stats {
         match damage_type {
-            DamageType::Physical => {
-                // Armor reduces physical damage
-                base_damage * (100.0 / (100.0 + stats.armor))
-            }
-            DamageType::Magic => {
-                // Magic resist reduces magic damage
-                base_damage * (100.0 / (100.0 + stats.magic_resist))
-            }
-            DamageType::True => {
-                // True damage ignores resistances
-                base_damage
-            }
-            DamageType::Chaos => {
-                // Chaos damage is 50% physical, 50% magic
-                let physical = base_damage * 0.5 * (100.0 / (100.0 + stats.armor));
-                let magic = base_damage * 0.5 * (100.0 / (100.0 + stats.magic_resist));
-                physical + magic
-            }
+            DamageType::Physical => base_damage * (100.0 / (100.0 + stats.armor)),
+            DamageType::Magic => base_damage * (100.0 / (100.0 + stats.magic_resist)),
+            DamageType::True => base_damage,
+            DamageType::Custom(_) => base_damage, // Default behavior for custom types
         }
     } else {
         base_damage
@@ -120,30 +100,28 @@ fn apply_shield_damage(shield: &mut Shield, damage: f32) -> f32 {
     }
 }
 
-/// Apply damage over time effects
 pub fn apply_damage_modifiers(mut query: Query<(&mut Health, &StatusEffect)>, time: Res<Time>) {
+    let delta = time.delta_secs();
     for (mut health, status) in query.iter_mut() {
         match &status.effect_type {
             StatusEffectType::Poison(damage_per_second) => {
-                health.current -= damage_per_second * time.delta_seconds();
+                health.current = (health.current - damage_per_second * delta).max(0.0);
             }
             StatusEffectType::Burn(damage_per_second) => {
-                health.current -= damage_per_second * time.delta_seconds();
+                health.current = (health.current - damage_per_second * delta).max(0.0);
             }
             StatusEffectType::Regeneration(heal_per_second) => {
-                health.current =
-                    (health.current + heal_per_second * time.delta_seconds()).min(health.maximum);
+                health.current = (health.current + heal_per_second * delta).min(health.maximum);
             }
             _ => {}
         }
     }
 }
 
-/// Check for deaths and mark entities
 pub fn check_for_deaths(
     mut commands: Commands,
     query: Query<(Entity, &Health), Without<Dead>>,
-    mut death_events: MessageWriter<DeathEvent>,
+    mut death_events: EventWriter<DeathEvent>,
 ) {
     for (entity, health) in query.iter() {
         if health.current <= 0.0 {
@@ -159,5 +137,3 @@ pub fn check_for_deaths(
         }
     }
 }
-impl bevy::prelude::Message for DamageEvent {}
-impl bevy::prelude::Message for DeathEvent {}

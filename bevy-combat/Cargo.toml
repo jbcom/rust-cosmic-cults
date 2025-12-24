@@ -1,0 +1,29 @@
+[package]
+name = "bevy-combat"
+version = "0.1.0"
+authors = ["Jon Bogaty <jon@jonbogaty.com>"]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jbcom/rust-cosmic-cults"
+homepage = "https://github.com/jbcom/rust-cosmic-cults"
+documentation = "https://docs.rs/bevy-combat"
+description = "Generic combat systems for Bevy: damage, effects, and targeting"
+keywords = ["bevy", "combat", "game", "damage", "effects"]
+categories = ["game-development", "game-engines"]
+readme = "README.md"
+
+[dependencies]
+# Core Bevy engine
+bevy = { version = "0.17", default-features = false, features = ["bevy_state"] }
+
+# Math and utilities
+glam = "0.30"
+smallvec = "1.15"
+
+# Serialization for combat state persistence
+serde = { version = "1.0", features = ["derive"] }
+
+[features]
+default = []
+wasm = []

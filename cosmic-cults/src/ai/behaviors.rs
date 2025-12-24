@@ -1,8 +1,4 @@
-//! Game-specific behavior components for AI entities
-//!
-//! These components mark entities as executing specific behaviors
-//! and carry relevant data for those behaviors.
-
+//! Game-specific behavior components for AI entities in Cosmic Cults
 use bevy::prelude::*;
 
 /// Gathering behavior marker component

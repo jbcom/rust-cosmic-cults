@@ -1,32 +1,15 @@
 use bevy::prelude::*;
+use bevy_combat::prelude::Health;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[cfg(feature = "web")]
 use web_sys::console;
-
-// Health component
-#[derive(Component, Clone, Debug)]
-pub struct Health {
-    pub current: f32,
-    pub maximum: f32,
-}
-
-impl Health {
-    pub fn new(max: f32) -> Self {
-        Self {
-            current: max,
-            maximum: max,
-        }
-    }
-}
 
 // Core unit component - the main entity type for units
 #[derive(Component, Clone, Debug)]
 pub struct Unit {
     pub cult: String,
     pub unit_type: String,
-    pub health: f32,
-    pub max_health: f32,
     pub experience: u32,
     pub veteran_tier: u32,
     pub attack_damage: f32,
@@ -39,8 +22,6 @@ impl Default for Unit {
         Self {
             cult: String::new(),
             unit_type: String::new(),
-            health: 100.0,
-            max_health: 100.0,
             experience: 0,
             veteran_tier: 0,
             attack_damage: 10.0,
@@ -55,8 +36,6 @@ impl Default for Unit {
 pub struct Leader {
     pub name: String,
     pub cult: String,
-    pub health: f32,
-    pub max_health: f32,
     pub shield: f32,
     pub aura_radius: f32,
     pub aura_type: AuraType,
@@ -72,8 +51,6 @@ impl Default for Leader {
         Self {
             name: String::new(),
             cult: String::new(),
-            health: 200.0,
-            max_health: 200.0,
             shield: 50.0,
             aura_radius: 15.0,
             aura_type: AuraType::Leadership,

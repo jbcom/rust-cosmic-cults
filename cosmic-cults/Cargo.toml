@@ -1,0 +1,22 @@
+[package]
+name = "cosmic-cults"
+version = "0.1.0"
+authors = ["Jon Bogaty <jon@jonbogaty.com>"]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+description = "Warcraft meets Cthulhu old-school RTS"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_state", "bevy_render", "bevy_pbr", "bevy_gizmos"] }
+bevy-ai-toolkit = { path = "../bevy-ai-toolkit" }
+bevy-combat = { path = "../bevy-combat" }
+game-physics = { path = "../game-physics" }
+game-assets = { path = "../game-assets" }
+game-world = { path = "../game-world" }
+game-units = { path = "../game-units" }
+
+# Math and utilities
+glam = { workspace = true }
+serde = { workspace = true }
+rand = { workspace = true }
