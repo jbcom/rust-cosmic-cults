@@ -619,37 +619,35 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          fetch-depth: 0
-          # Use CI_GITHUB_TOKEN to allow commits to trigger workflows
-          token: ${{ secrets.CI_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Get PR number
+      - name: Get PR info
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER_FROM_PR: ${{ github.event.pull_request.number }}
+          # For pull_request_review and pull_request_review_comment
+          PR_NUMBER_FROM_EVENT: ${{ github.event.pull_request.number }}
+          # For issue_comment
           PR_NUMBER_FROM_ISSUE: ${{ github.event.issue.number }}
         run: |
-          # Determine PR number based on event type
           if [[ "$EVENT_NAME" == "pull_request_review" ]] || [[ "$EVENT_NAME" == "pull_request_review_comment" ]]; then
-            PR_NUM="$PR_NUMBER_FROM_PR"
+            PR_NUM="$PR_NUMBER_FROM_EVENT"
           else
             PR_NUM="$PR_NUMBER_FROM_ISSUE"
           fi
           echo "number=$PR_NUM" >> $GITHUB_OUTPUT
           
-          # Get PR head ref for checkout
-          HEAD_REF=$(gh pr view "$PR_NUM" --json headRefName -q '.headRefName')
-          echo "head_ref=$HEAD_REF" >> $GITHUB_OUTPUT
+          # Get PR head SHA and ref for checkout
+          # We use --repo to avoid needing a local clone
+          PR_DATA=$(gh pr view "$PR_NUM" --repo ${{ github.repository }} --json headRefName,headRefOid)
+          echo "head_ref=$(echo "$PR_DATA" | jq -r '.headRefName')" >> $GITHUB_OUTPUT
+          echo "head_sha=$(echo "$PR_DATA" | jq -r '.headRefOid')" >> $GITHUB_OUTPUT
 
-      - name: Checkout PR branch
-        env:
-          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
-        run: git checkout "$HEAD_REF"
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.pr.outputs.head_sha }}
+          token: ${{ secrets.CI_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Collect all AI feedback
         id: feedback
