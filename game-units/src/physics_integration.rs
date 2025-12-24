@@ -137,7 +137,7 @@ pub fn physics_steering_movement_system(
     time: Res<Time>,
     mut query: Query<(&mut Velocity, &Transform, &mut MovementController, &Mass), With<Unit>>,
 ) {
-    let dt = time.delta_secs();
+    let dt = time.delta_seconds();
 
     for (mut velocity, transform, mut controller, mass) in query.iter_mut() {
         if !controller.is_moving {

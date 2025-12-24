@@ -388,7 +388,7 @@ pub fn decision_making_system(
     mut query: Query<(Entity, &mut AIDecisionMaker, &Transform), With<AIDecisionMaker>>,
     mut commands: Commands,
 ) {
-    let current_time = time.elapsed_secs();
+    let current_time = time.elapsed_seconds();
 
     for (entity, mut decision_maker, transform) in query.iter_mut() {
         // Check cooldown

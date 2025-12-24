@@ -286,7 +286,7 @@ pub fn update_psychological_state_system(
     mut query: Query<(&mut PsychologicalState, &CultProfile, &Transform)>,
     time: Res<Time>,
 ) {
-    let delta = time.delta_secs();
+    let delta = time.delta_seconds();
 
     for (mut psychological_state, cult_profile, _transform) in query.iter_mut() {
         // Gradually return to baseline

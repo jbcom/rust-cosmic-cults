@@ -180,7 +180,7 @@ pub fn target_validation_system(
 
                 // Update lock time
                 if !lose_target {
-                    targeting.target_lock_time += time.delta_secs();
+                    targeting.target_lock_time += time.delta_seconds();
                 }
             } else {
                 // Target no longer exists
@@ -246,11 +246,11 @@ pub fn homing_projectile_system(
 
             // Smoothly rotate towards target
             let current_dir = transform.rotation * Vec3::Z;
-            let new_dir = current_dir.lerp(to_target, homing.turn_speed * time.delta_secs());
+            let new_dir = current_dir.lerp(to_target, homing.turn_speed * time.delta_seconds());
             transform.look_to(new_dir, Vec3::Y);
 
             // Accelerate towards target
-            velocity.linear += new_dir * homing.acceleration * time.delta_secs();
+            velocity.linear += new_dir * homing.acceleration * time.delta_seconds();
 
             // Cap max speed
             let max_speed = 50.0;

@@ -203,7 +203,7 @@ pub fn formation_maintenance_system(
     time: Res<Time>,
     mut unit_query: Query<(&mut Transform, &mut MovementTarget, &Formation), With<Unit>>,
 ) {
-    let dt = time.delta_secs();
+    let dt = time.delta_seconds();
 
     for (mut transform, mut target, formation) in unit_query.iter_mut() {
         if !target.reached {

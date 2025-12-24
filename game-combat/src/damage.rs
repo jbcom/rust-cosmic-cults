@@ -125,14 +125,14 @@ pub fn apply_damage_modifiers(mut query: Query<(&mut Health, &StatusEffect)>, ti
     for (mut health, status) in query.iter_mut() {
         match &status.effect_type {
             StatusEffectType::Poison(damage_per_second) => {
-                health.current -= damage_per_second * time.delta_secs();
+                health.current -= damage_per_second * time.delta_seconds();
             }
             StatusEffectType::Burn(damage_per_second) => {
-                health.current -= damage_per_second * time.delta_secs();
+                health.current -= damage_per_second * time.delta_seconds();
             }
             StatusEffectType::Regeneration(heal_per_second) => {
                 health.current =
-                    (health.current + heal_per_second * time.delta_secs()).min(health.maximum);
+                    (health.current + heal_per_second * time.delta_seconds()).min(health.maximum);
             }
             _ => {}
         }

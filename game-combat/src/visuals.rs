@@ -169,14 +169,14 @@ pub fn update_damage_numbers(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mut transform, mut damage_num) in query.iter_mut() {
-        damage_num.lifetime -= time.delta_secs();
+        damage_num.lifetime -= time.delta_seconds();
 
         if damage_num.lifetime <= 0.0 {
             commands.entity(entity).despawn();
         } else {
             // Float upward and fade out
-            transform.translation += damage_num.velocity * time.delta_secs();
-            damage_num.velocity.y -= 2.0 * time.delta_secs(); // Gravity
+            transform.translation += damage_num.velocity * time.delta_seconds();
+            damage_num.velocity.y -= 2.0 * time.delta_seconds(); // Gravity
 
             // Fade out effect through scale
             let alpha = damage_num.lifetime / 1.5;
@@ -184,7 +184,7 @@ pub fn update_damage_numbers(
 
             // Scale based on critical with pulse effect
             if damage_num.is_critical {
-                let pulse = (time.elapsed_secs() * 10.0).sin() * 0.1 + 1.0;
+                let pulse = (time.elapsed_seconds() * 10.0).sin() * 0.1 + 1.0;
                 transform.scale *= pulse;
             }
 
@@ -228,7 +228,7 @@ pub fn update_hit_flash(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mut flash, mat_handle) in query.iter_mut() {
-        flash.elapsed += time.delta_secs();
+        flash.elapsed += time.delta_seconds();
 
         if flash.elapsed >= flash.duration {
             // Restore original color
@@ -300,7 +300,7 @@ pub fn update_death_effects(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mut death_effect, mat_handle) in query.iter_mut() {
-        death_effect.time_elapsed += time.delta_secs();
+        death_effect.time_elapsed += time.delta_seconds();
 
         if death_effect.time_elapsed >= death_effect.fade_time {
             // Remove entity after fade complete
@@ -323,21 +323,21 @@ pub fn update_combat_particles(
     mut query: Query<(Entity, &mut Transform, &mut VisualCombatParticle)>,
 ) {
     for (entity, mut transform, mut particle) in query.iter_mut() {
-        particle.lifetime -= time.delta_secs();
+        particle.lifetime -= time.delta_seconds();
 
         if particle.lifetime <= 0.0 {
             commands.entity(entity).despawn();
         } else {
             // Update position
-            transform.translation += particle.velocity * time.delta_secs();
+            transform.translation += particle.velocity * time.delta_seconds();
 
             // Apply gravity to some particle types
             match particle.particle_type {
                 ParticleType::Blood | ParticleType::Water => {
-                    particle.velocity.y -= 9.8 * time.delta_secs();
+                    particle.velocity.y -= 9.8 * time.delta_seconds();
                 }
                 ParticleType::Fire => {
-                    particle.velocity.y += 2.0 * time.delta_secs(); // Fire rises
+                    particle.velocity.y += 2.0 * time.delta_seconds(); // Fire rises
                 }
                 _ => {}
             }
@@ -374,7 +374,7 @@ pub fn update_shield_effects(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (mut transform, mut shield, mat_handle) in query.iter_mut() {
-        shield.hit_time -= time.delta_secs();
+        shield.hit_time -= time.delta_seconds();
 
         // Pulse effect when hit
         if shield.hit_time > 0.0 {
@@ -388,7 +388,7 @@ pub fn update_shield_effects(
             }
         } else {
             // Normal shield animation
-            let pulse = (time.elapsed_secs() * 2.0).sin() * 0.05 + 1.0;
+            let pulse = (time.elapsed_seconds() * 2.0).sin() * 0.05 + 1.0;
             transform.scale = Vec3::splat(shield.radius * pulse);
         }
     }
@@ -403,22 +403,22 @@ pub fn animate_buff_indicators(
         // Rotate and pulse based on effect type
         match indicator.effect_type {
             StatusEffectType::AttackSpeed(_) => {
-                transform.rotate_y(3.0 * time.delta_secs());
-                let pulse = (time.elapsed_secs() * 5.0).sin() * 0.1 + 1.0;
+                transform.rotate_y(3.0 * time.delta_seconds());
+                let pulse = (time.elapsed_seconds() * 5.0).sin() * 0.1 + 1.0;
                 transform.scale = Vec3::splat(indicator.base_scale * pulse);
             }
             StatusEffectType::Poison(_) | StatusEffectType::Burn(_) => {
-                transform.rotate_x(1.0 * time.delta_secs());
-                transform.rotate_z(1.0 * time.delta_secs());
+                transform.rotate_x(1.0 * time.delta_seconds());
+                transform.rotate_z(1.0 * time.delta_seconds());
             }
             StatusEffectType::Freeze => {
                 // No rotation for freeze, just subtle pulse
-                let pulse = (time.elapsed_secs() * 1.0).sin() * 0.02 + 1.0;
+                let pulse = (time.elapsed_seconds() * 1.0).sin() * 0.02 + 1.0;
                 transform.scale = Vec3::splat(indicator.base_scale * pulse);
             }
             _ => {
                 // Default rotation
-                transform.rotate_y(1.0 * time.delta_secs());
+                transform.rotate_y(1.0 * time.delta_seconds());
             }
         }
     }

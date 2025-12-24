@@ -175,7 +175,7 @@ pub fn target_acquisition_system(
     mut query: Query<(Entity, &mut TargetSelector, &Transform)>,
     time: Res<Time>,
 ) {
-    let current_time = time.elapsed_secs();
+    let current_time = time.elapsed_seconds();
 
     for (_entity, mut selector, _transform) in query.iter_mut() {
         // Check if it's time to reacquire target
