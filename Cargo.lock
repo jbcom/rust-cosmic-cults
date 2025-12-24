@@ -171,9 +171,9 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.4.1"
+version = "3.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fd03604047cee9b6ce9de9f70c6cd540a0520c813cbd49bae61f33ab80ed1dc"
+checksum = "290f7f2596bd5b78a9fec8088ccd89180d7f9f55b94b0576823bbbdc72ee8311"
 dependencies = [
  "event-listener",
  "event-listener-strategy",
@@ -227,7 +227,7 @@ dependencies = [
  "bevy_math",
  "bevy_transform_interpolation",
  "bitflags",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "disqualified",
  "glam_matrix_extras",
  "itertools 0.13.0",
@@ -352,7 +352,7 @@ dependencies = [
  "bitflags",
  "blake3",
  "crossbeam-channel",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "disqualified",
  "downcast-rs 2.0.2",
  "either",
@@ -401,7 +401,7 @@ dependencies = [
  "bevy_transform",
  "bevy_utils 0.17.3",
  "bevy_window",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "downcast-rs 2.0.2",
  "serde",
  "smallvec",
@@ -418,7 +418,7 @@ dependencies = [
  "bevy_math",
  "bevy_reflect 0.17.3",
  "bytemuck",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "encase",
  "serde",
  "thiserror 2.0.17",
@@ -530,7 +530,7 @@ dependencies = [
  "bitflags",
  "bumpalo",
  "concurrent-queue",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "fixedbitset 0.5.7",
  "indexmap",
  "log",
@@ -698,7 +698,7 @@ dependencies = [
  "bevy_math",
  "bevy_platform",
  "bevy_reflect 0.17.3",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "log",
  "smol_str",
  "thiserror 2.0.17",
@@ -834,7 +834,7 @@ checksum = "5fa74ae5d968749cc073da991757d3c7e3504ac6dbaac5f8c2a54b9d19b0b7ed"
 dependencies = [
  "approx",
  "bevy_reflect 0.17.3",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "glam 0.30.9",
  "itertools 0.14.0",
  "libm",
@@ -864,7 +864,7 @@ dependencies = [
  "bevy_transform",
  "bitflags",
  "bytemuck",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "hexasphere",
  "thiserror 2.0.17",
  "tracing",
@@ -903,7 +903,7 @@ dependencies = [
  "bevy_utils 0.17.3",
  "bitflags",
  "bytemuck",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "fixedbitset 0.5.7",
  "nonmax",
  "offset-allocator",
@@ -1030,7 +1030,7 @@ dependencies = [
  "bevy_ptr 0.17.3",
  "bevy_reflect_derive 0.17.3",
  "bevy_utils 0.17.3",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "disqualified",
  "downcast-rs 2.0.2",
  "erased-serde",
@@ -1102,7 +1102,7 @@ dependencies = [
  "bevy_window",
  "bitflags",
  "bytemuck",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "downcast-rs 2.0.2",
  "encase",
  "fixedbitset 0.5.7",
@@ -1149,7 +1149,7 @@ dependencies = [
  "bevy_reflect 0.17.3",
  "bevy_transform",
  "bevy_utils 0.17.3",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "serde",
  "thiserror 2.0.17",
  "uuid",
@@ -1225,7 +1225,7 @@ dependencies = [
  "bevy_platform",
  "concurrent-queue",
  "crossbeam-queue",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "futures-lite",
  "heapless",
  "pin-project",
@@ -1259,7 +1259,7 @@ dependencies = [
  "bevy_reflect 0.17.3",
  "bevy_tasks 0.17.3",
  "bevy_utils 0.17.3",
- "derive_more 2.1.0",
+ "derive_more 2.1.1",
  "serde",
  "thiserror 2.0.17",
 ]
@@ -1692,11 +1692,11 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10b768e943bed7bf2cab53df09f4bc34bfd217cdb57d971e769874c9a6710618"
+checksum = "d751e9e49156b02b44f9c1815bcb94b984cdcc4396ecc32521c739452808b134"
 dependencies = [
- "derive_more-impl 2.1.0",
+ "derive_more-impl 2.1.1",
 ]
 
 [[package]]
@@ -1713,9 +1713,9 @@ dependencies = [
 
 [[package]]
 name = "derive_more-impl"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d286bfdaf75e988b4a78e013ecd79c581e06399ab53fbacd2d916c2f904f30b"
+checksum = "799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -2431,9 +2431,9 @@ dependencies = [
 
 [[package]]
 name = "itoa"
-version = "1.0.15"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
+checksum = "7ee5b5339afb4c41626dde77b7a611bd4f2c202b897852b4bcf5d03eddc61010"
 
 [[package]]
 name = "jni"
@@ -3015,9 +3015,9 @@ dependencies = [
 
 [[package]]
 name = "portable-atomic"
-version = "1.11.1"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+checksum = "f59e70c4aef1e55797c2e8fd94a4f2a973fc972cfde0e0b05f683667b0cd39dd"
 
 [[package]]
 name = "portable-atomic-util"
@@ -3348,12 +3348,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
-name = "ryu"
-version = "1.0.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
-
-[[package]]
 name = "safe_arch"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3421,15 +3415,15 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.145"
+version = "1.0.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "402a6f66d8c709116cf22f558eab210f5a50187f702eb4d7e5ef38d9a7f1c79c"
+checksum = "6af14725505314343e673e9ecb7cd7e8a36aa9791eb936235a3567cc31447ae4"
 dependencies = [
  "itoa",
  "memchr",
- "ryu",
  "serde",
  "serde_core",
+ "zmij",
 ]
 
 [[package]]
@@ -4351,3 +4345,9 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "zmij"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e404bcd8afdaf006e529269d3e85a743f9480c3cef60034d77860d02964f3ba"
