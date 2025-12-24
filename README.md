@@ -19,7 +19,7 @@ A Lovecraftian 4X real-time strategy game built with the Bevy game engine, targe
 | Crate | Description | Status |
 |-------|-------------|--------|
 | `game-ai` | AI systems, behavior trees, utility AI | 🚧 Migration |
-| `game-combat` | Combat, damage, effects, XP | 🚧 Migration |
+| `bevy-combat` | Combat, damage, effects, XP | 🚧 Migration |
 | `game-world` | World generation, terrain, fog of war | 🚧 Migration |
 | `game-units` | Unit management, formations | 🚧 Migration |
 | `game-physics` | Physics integration with Avian3D | 🚧 Migration |

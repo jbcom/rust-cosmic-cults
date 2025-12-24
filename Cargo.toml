@@ -1,5 +1,5 @@
 [workspace]
-members = ["bevy-ai-toolkit", "game-physics", "game-assets", "game-world", "game-units", "game-combat", "game-ai", "game-runner"]
+members = ["bevy-ai-toolkit", "bevy-combat", "game-physics", "game-assets", "game-world", "game-units", "game-ai", "cosmic-cults"]
 resolver = "2"
 
 [workspace.package]
