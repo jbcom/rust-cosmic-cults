@@ -120,6 +120,8 @@ pub enum BehaviorNode {
     // Decorator nodes
     Inverter(Box<BehaviorNode>),
     Repeater(Box<BehaviorNode>, u32),
+    UntilFail(Box<BehaviorNode>),
+    UntilSuccess(Box<BehaviorNode>),
     Succeeder(Box<BehaviorNode>),
     Failer(Box<BehaviorNode>),
 
@@ -238,6 +240,20 @@ impl BehaviorNode {
                     }
                 }
                 NodeStatus::Success
+            }
+
+            BehaviorNode::UntilFail(child) => {
+                match child.tick(blackboard, _entity, _world) {
+                    NodeStatus::Failure => NodeStatus::Success,
+                    _ => NodeStatus::Running,
+                }
+            }
+
+            BehaviorNode::UntilSuccess(child) => {
+                match child.tick(blackboard, _entity, _world) {
+                    NodeStatus::Success => NodeStatus::Success,
+                    _ => NodeStatus::Running,
+                }
             }
 
             BehaviorNode::Succeeder(child) => {

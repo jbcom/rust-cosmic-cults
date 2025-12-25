@@ -1,10 +1,15 @@
 [package]
 name = "cosmic-cults"
-version = "0.1.0"
-authors = ["Jon Bogaty <jon@jonbogaty.com>"]
-edition = "2024"
-rust-version = "1.85"
-license = "MIT OR Apache-2.0"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
 description = "Warcraft meets Cthulhu old-school RTS"
 
 [dependencies]
@@ -20,3 +25,4 @@ game-units = { path = "../game-units" }
 glam = { workspace = true }
 serde = { workspace = true }
 rand = { workspace = true }
+tracing = { workspace = true }

@@ -1,8 +1,9 @@
 [package]
 name = "game-world"
-version = "0.1.0"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -15,11 +16,11 @@ bevy = { workspace = true, features = ["bevy_pbr", "bevy_render", "bevy_asset", 
 # bevy_rapier3d = { workspace = true }
 bevy_rand = { workspace = true }
 game-assets = { path = "../game-assets" }
-rand = { workspace = true }
-indexmap = { workspace = true }
-ahash = { workspace = true }
-serde = { workspace = true }
-tracing = "0.1"
+rand.workspace = true
+indexmap.workspace = true
+ahash.workspace = true
+serde.workspace = true
+tracing = { workspace = true }
 
 [features]
 default = []

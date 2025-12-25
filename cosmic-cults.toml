@@ -1,0 +1,45 @@
+name = "cosmic-cults"
+theme = "Warcraft meets Cthulhu"
+genre = "old-school RTS"
+description = "A Lovecraftian 4X real-time strategy game built with Bevy"
+
+[[toolkits]]
+name = "bevy-ai-toolkit"
+version = "0.1.0"
+
+[[toolkits]]
+name = "bevy-combat"
+version = "0.1.0"
+
+[[factions]]
+name = "Order of the Deep"
+description = "Knowledge-focused, defensive cult"
+traits = ["defensive", "research-oriented", "builders"]
+
+[[factions]]
+name = "Crimson Covenant"
+description = "Blood-focused, aggressive cult"
+traits = ["aggressive", "expansionist", "blood-thirst"]
+
+[[factions]]
+name = "Void Seekers"
+description = "Corruption-focused, mystical cult"
+traits = ["corruptive", "mystical", "influential"]
+
+[systems.ai]
+use_toolkit = "bevy-ai-toolkit"
+extensions = ["psychological_states", "cult_profiles"]
+
+[systems.combat]
+use_toolkit = "bevy-combat"
+extensions = ["lovecraftian_effects", "xp_progression"]
+
+[systems.world]
+features = ["fog_of_war", "terrain_generation", "spawning"]
+
+[systems.physics]
+engine = "avian3d"
+
+[assets.generation]
+provider = "generator-ai-client"
+target = "retro-3d"

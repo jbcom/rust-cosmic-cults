@@ -9,7 +9,7 @@ public_url = "/"
 
 [watch]
 # Watch these paths for changes
-watch = ["game-runner/src", "game-physics/src", "game-units/src", "game-world/src", "cosmic-cults/src", "game-assets/src"]
+watch = ["cosmic-cults/src", "bevy-ai-toolkit/src", "bevy-combat/src", "game-physics/src", "game-units/src", "game-world/src", "game-assets/src"]
 ignore = ["target", "dist"]
 
 [serve]

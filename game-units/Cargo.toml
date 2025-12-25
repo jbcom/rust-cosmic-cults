@@ -1,6 +1,6 @@
 [package]
 name = "game-units"
-version = "0.1.0"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -32,12 +32,13 @@ smallvec = { workspace = true }
 
 # Serialization for unit data persistence
 serde = { workspace = true }
+tracing = { workspace = true }
 
 # Web support for logging (when compiled for wasm)
 web-sys = { workspace = true, features = ["console"], optional = true }
 
 # Randomization for unit variations
-rand = { workspace = true }
+rand.workspace = true
 
 [features]
 default = []
