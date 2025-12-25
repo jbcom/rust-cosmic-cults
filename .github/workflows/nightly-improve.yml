@@ -11,24 +11,6 @@ on:
   schedule:
     # Run at 2 AM UTC on weekdays
     - cron: '0 2 * * 1-5'
-  workflow_dispatch:
-    inputs:
-      focus:
-        description: "Focus area for improvement"
-        required: false
-        type: choice
-        options:
-          - all
-          - tests
-          - docs
-          - quality
-          - security
-        default: all
-      dry_run:
-        description: "Analyze only, don't update branch"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write

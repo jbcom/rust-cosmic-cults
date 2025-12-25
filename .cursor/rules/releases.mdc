@@ -27,13 +27,13 @@ feat(scope)!: breaking change  → major bump (X.0.0)
 
 | Scope | Package |
 |-------|---------|
-| `edt` | extended-data-types |
-| `logging` | lifecyclelogging |
-| `dic` | directed-inputs-class |
-| `bridge` | python-terraform-bridge |
-| `connectors` | vendor-connectors |
-| `agentic` | agentic-control |
-| `vss` | vault-secret-sync |
+| `core` | cosmic-cults (main game) |
+| `ai` | bevy-ai-toolkit |
+| `combat` | bevy-combat |
+| `physics` | game-physics |
+| `world` | game-world |
+| `units` | game-units |
+| `assets` | game-assets |
 
 ## Release Process
 

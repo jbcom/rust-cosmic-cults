@@ -1,0 +1,6 @@
+{
+  "name": "rust-cosmic-cults",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Warcraft meets Cthulhu old-school RTS in Rust"
+}
