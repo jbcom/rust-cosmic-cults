@@ -18,13 +18,10 @@ A Lovecraftian 4X real-time strategy game built with the Bevy game engine, targe
 
 | Crate | Description | Status |
 |-------|-------------|--------|
-| `game-ai` | AI systems, behavior trees, utility AI | 🚧 Migration |
-| `game-combat` | Combat, damage, effects, XP | 🚧 Migration |
-| `game-world` | World generation, terrain, fog of war | 🚧 Migration |
-| `game-units` | Unit management, formations | 🚧 Migration |
-| `game-physics` | Physics integration with Avian3D | 🚧 Migration |
-| `game-assets` | Asset loading and management | 🚧 Migration |
-| `game-runner` | Main game runner | 🚧 Migration |
+| `bevy-ai-toolkit` | Generic AI systems: behavior trees, state machines, utility AI | ✅ Active |
+| `bevy-combat` | Combat, damage, effects, XP | ✅ Active |
+| `game-physics` | Physics integration with Avian3D | ✅ Active |
+| `cosmic-cults` | Main game crate (World, Units, Assets, AI behaviors) | ✅ Active |
 
 ## Development
 
@@ -65,7 +62,7 @@ cargo doc --no-deps --all-features --open
 
 ### Running Examples
 
-See [game-runner/examples/README.md](game-runner/examples/README.md) for detailed information.
+See [cosmic-cults/examples/README.md](cosmic-cults/examples/README.md) for detailed information.
 
 ```bash
 # Run a native example
@@ -128,7 +125,7 @@ All code is automatically checked by CI on every push and pull request:
 - [Online Documentation](https://jbcom.github.io/rust-cosmic-cults/)
 - [Rust Standards](RUST_STANDARDS.md) - Development standards and tooling
 - [WASM Demo](WASM_DEMO.md) - WebAssembly build and deployment
-- [Examples](game-runner/examples/README.md) - Runnable examples
+- [Examples](cosmic-cults/examples/README.md) - Runnable examples
 - [Architecture Docs](docs/) - Detailed architecture documentation
 
 ## License

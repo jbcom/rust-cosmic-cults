@@ -1,0 +1,21 @@
+[game]
+name = "cosmic-cults"
+title = "Cosmic Cults"
+description = "Warcraft meets Cthulhu - an old-school Lovecraftian RTS"
+theme = "Lovecraftian Horror"
+genre = "RTS"
+
+[generator]
+ai_client = "generator-ai"
+template = "bevy-rts"
+
+[integration]
+ai_toolkit = "bevy-ai-toolkit"
+combat_system = "bevy-combat"
+
+[content]
+cults = [
+    { name = "Cult of Cthulhu", focus = "Aggression", leader = "Cthulhu" },
+    { name = "Followers of Hastur", focus = "Infection", leader = "The King in Yellow" },
+    { name = "Order of Dagon", focus = "Resource", leader = "Dagon" }
+]
