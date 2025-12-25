@@ -1,6 +1,4 @@
-#![allow(unused)]
 use bevy::prelude::*;
-use avian3d::prelude::*;
 
 // Module declarations
 pub mod components;
@@ -8,6 +6,8 @@ pub mod formations;
 pub mod leadership;
 pub mod spawning;
 pub mod visuals;
+pub mod ai;
+pub mod selection;
 
 // Re-exports for easy access
 pub use components::*;
@@ -15,6 +15,8 @@ pub use formations::*;
 pub use leadership::*;
 pub use spawning::*;
 pub use visuals::*;
+pub use ai::*;
+pub use selection::*;
 
 // Main plugin for the game-units crate
 #[derive(Default)]
@@ -41,28 +43,7 @@ impl Plugin for GameUnitsPlugin {
                     animate_idle_units,
                 ),
             )
-            .add_systems(
-                Update,
-                (
-                    // Formation systems
-                    formation_system,
-                    leader_formation_system,
-                    formation_switching_system,
-                    formation_maintenance_system,
-                    formation_spacing_system,
-                ),
-            )
-            .add_systems(
-                Update,
-                (
-                    // Leadership systems
-                    defeat_condition_system,
-                    leader_abilities_system,
-                    buff_application_system,
-                    aura_cleanup_system,
-                    passive_aura_system,
-                    platform_building_system,
-                ),
-            );
+            .add_plugins(UnitAIPlugin)
+            .add_plugins(selection_plugin);
     }
 }

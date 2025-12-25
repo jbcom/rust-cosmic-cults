@@ -1,15 +1,13 @@
 use crate::units::visuals::*;
 use crate::units::{
-    AuraType, BaseStats, Experience, Leader, Selectable, Team, Unit, VeteranBonus, VeteranStatus,
-    VeteranTier,
+    AuraType, Experience, Leader, SelectionPriority, Team, Unit, VeteranStatus, Health, MovementPath,
+    MoveToAction, HasPathScorer,
 };
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
-use crate::physics_engine::{
-    AABB, CollisionMask, Friction, Mass, MovementController, MovementPath, MovementTarget,
-    RigidBodyType, RigidBodyVariant, SpatialData, Velocity,
-};
+use avian3d::prelude::*;
+use big_brain::prelude::*;
 use std::collections::HashMap;
 #[cfg(feature = "web")]
 use web_sys::console;
@@ -146,72 +144,45 @@ pub fn spawn_unit(
             Unit {
                 unit_type: unit_type.to_string(),
                 cult: cult.to_string(),
-                health: 100.0,
-                max_health: 100.0,
-                experience: 0,
-                veteran_tier: 0,
                 attack_damage: 10.0,
                 movement_speed: 5.0,
                 attack_speed: 1.0,
             },
+            Health::new(100.0),
             Team {
                 id: team_id,
                 cult: cult.to_string(),
                 color: cult_color,
             },
-            Selectable {
-                selection_priority: 1,
-                selection_radius: 1.5,
+            SelectionPriority {
+                value: 1,
             },
+            MovementPath::default(),
         ))
         .insert((
-            // === PHYSICS COMPONENTS ===
-            MovementController {
-                target_position: None,
-                velocity: Vec3::ZERO,
-                max_speed: 5.0,
-                acceleration: 10.0,
-                rotation_speed: 5.0,
-                path_index: 0,
-                waypoints: Vec::new(),
-                is_moving: false,
-                movement_type: crate::physics_engine::MovementType::Ground,
-            },
-            Velocity::default(),
-            AABB::from_size(Vec3::new(1.0, 2.0, 1.0)), // Unit collision box
-            Mass::new(1.0),                            // Standard unit mass
-            Friction::default(),
-            RigidBodyType {
-                body_type: RigidBodyVariant::Dynamic,
-            },
-            CollisionMask {
-                layer: 1,       // Unit layer
-                mask: u32::MAX, // Collide with everything
-            },
-            SpatialData::new(position), // For spatial indexing
+            // === AI COMPONENTS (big-brain) ===
+            Thinker::build()
+                .picker(FirstToScore::new(0.1))
+                .when(HasPathScorer, MoveToAction),
         ))
         .insert((
-            // === MOVEMENT & STATS COMPONENTS ===
-            MovementTarget::new(position.x, position.z, position.z, 5.0),
-            MovementPath {
-                waypoints: Vec::new(),
-                current_waypoint_index: 0,
-                movement_speed: 5.0,
-                is_moving: false,
+            // === PHYSICS COMPONENTS (avian3d) ===
+            RigidBody::Dynamic,
+            Collider::cuboid(0.5, 1.0, 0.5), // Smaller collider for units
+            LinearVelocity::default(),
+            AngularVelocity::default(),
+            LockedAxes::ROTATION_LOCKED, // RTS units usually don't tumble
+            Friction::new(0.5),
+            Restitution::new(0.1),
+        ))
+        .insert((
+            // === PROGRESSION ===
+            Experience {
+                level: 1,
+                total: 0,
             },
-            BaseStats {
-                base_attack_damage: 10.0,
-                base_health: 100.0,
-                base_speed: 5.0,
-                base_attack_speed: 1.0,
-                initialized: true,
-            },
-            Experience::default(),
             VeteranStatus {
-                tier: VeteranTier::Recruit,
-                promotion_ready: false,
-                visual_scale: 1.0,
-                bonuses: VeteranBonus::default(),
+                tier: 0,
             },
         ))
         .with_children(|parent| {
@@ -268,7 +239,7 @@ pub fn spawn_unit(
     #[cfg(feature = "web")]
     console::log_1(
         &format!(
-            "Spawned {} unit (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            "Spawned {} unit for {} at ({:.2}, {:.2}, {:.2})",
             unit_type, cult, position.x, position.y, position.z
         )
         .into(),
@@ -306,69 +277,52 @@ pub fn spawn_leader(
             // === GAME COMPONENTS ===
             Leader {
                 name: name.to_string(),
-                cult: cult.to_string(),
-                health: 200.0,
-                max_health: 200.0,
-                shield: 50.0,
                 aura_radius: 15.0,
                 aura_type: aura_type.clone(),
                 platform_entity: None,
-                defeat_on_death: true,
-                alive: true,
-                last_ability1_use: 0.0,
-                last_ability2_use: 0.0,
             },
             Unit {
                 unit_type: "leader".to_string(),
                 cult: cult.to_string(),
-                health: 200.0,
-                max_health: 200.0,
-                experience: 0,
-                veteran_tier: 3,
                 attack_damage: 25.0,
                 movement_speed: 6.0,
                 attack_speed: 1.5,
             },
+            Health::new(200.0),
             Team {
                 id: team_id,
                 cult: cult.to_string(),
                 color: cult_color,
             },
-            Selectable {
-                selection_priority: 10,
-                selection_radius: 2.0,
+            SelectionPriority {
+                value: 10,
             },
-            MovementTarget::new(position.x, position.z, position.z, 6.0),
-            MovementPath {
-                waypoints: Vec::new(),
-                current_waypoint_index: 0,
-                movement_speed: 6.0,
-                is_moving: false,
-            },
-            BaseStats {
-                base_attack_damage: 25.0,
-                base_health: 200.0,
-                base_speed: 6.0,
-                base_attack_speed: 1.5,
-                initialized: true,
-            },
+            MovementPath::default(),
+        ))
+        .insert((
+            // === AI COMPONENTS (big-brain) ===
+            Thinker::build()
+                .picker(FirstToScore::new(0.1))
+                .when(HasPathScorer, MoveToAction),
+        ))
+        .insert((
+            // === PHYSICS COMPONENTS (avian3d) ===
+            RigidBody::Dynamic,
+            Collider::cuboid(0.7, 1.2, 0.7), // Slightly larger collider for leaders
+            LinearVelocity::default(),
+            AngularVelocity::default(),
+            LockedAxes::ROTATION_LOCKED,
+            Friction::new(0.5),
+            Restitution::new(0.1),
+        ))
+        .insert((
+            // === PROGRESSION ===
             Experience {
-                current: 0,
-                total_earned: 1000,
                 level: 5,
-                kills: 0,
-                buildings_destroyed: 0,
+                total: 1000,
             },
             VeteranStatus {
-                tier: VeteranTier::Veteran,
-                promotion_ready: false,
-                visual_scale: 1.2,
-                bonuses: VeteranBonus {
-                    health_multiplier: 1.5,
-                    damage_multiplier: 1.3,
-                    speed_multiplier: 1.2,
-                    xp_multiplier: 1.0,
-                },
+                tier: 3,
             },
         ))
         .with_children(|parent| {
@@ -475,7 +429,7 @@ pub fn spawn_leader(
     #[cfg(feature = "web")]
     console::log_1(
         &format!(
-            "Spawned leader {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            "Spawned leader {} for {} at ({:.2}, {:.2}, {:.2})",
             name, cult, position.x, position.y, position.z
         )
         .into(),
@@ -731,43 +685,44 @@ pub fn spawn_unit_from_template(
             Unit {
                 unit_type: template.unit_type.clone(),
                 cult: cult.to_string(),
-                health: template.base_health,
-                max_health: template.base_health,
-                experience: 0,
-                veteran_tier: 0,
                 attack_damage: template.base_attack,
                 movement_speed: template.base_speed,
                 attack_speed: template.attack_speed,
             },
+            Health::new(template.base_health),
             Team {
                 id: team_id,
                 cult: cult.to_string(),
                 color: cult_color,
             },
-            Selectable {
-                selection_priority: 1,
-                selection_radius: 1.5,
+            SelectionPriority {
+                value: 1,
             },
-            MovementTarget::new(position.x, position.z, position.z, template.base_speed),
-            MovementPath {
-                waypoints: Vec::new(),
-                current_waypoint_index: 0,
-                movement_speed: template.base_speed,
-                is_moving: false,
+            MovementPath::default(),
+        ))
+        .insert((
+            // === AI COMPONENTS (big-brain) ===
+            Thinker::build()
+                .picker(FirstToScore::new(0.1))
+                .when(HasPathScorer, MoveToAction),
+        ))
+        .insert((
+            // === PHYSICS COMPONENTS (avian3d) ===
+            RigidBody::Dynamic,
+            Collider::cuboid(0.5, 1.0, 0.5),
+            LinearVelocity::default(),
+            AngularVelocity::default(),
+            LockedAxes::ROTATION_LOCKED,
+            Friction::new(0.5),
+            Restitution::new(0.1),
+        ))
+        .insert((
+            Experience {
+                level: 1,
+                total: 0,
             },
-            BaseStats {
-                base_attack_damage: template.base_attack,
-                base_health: template.base_health,
-                base_speed: template.base_speed,
-                base_attack_speed: template.attack_speed,
-                initialized: true,
-            },
-            Experience::default(),
             VeteranStatus {
-                tier: VeteranTier::Recruit,
-                promotion_ready: false,
-                visual_scale: 1.0,
-                bonuses: VeteranBonus::default(),
+                tier: 0,
             },
         ))
         .with_children(|parent| {
@@ -824,7 +779,7 @@ pub fn spawn_unit_from_template(
     #[cfg(feature = "web")]
     console::log_1(
         &format!(
-            "Spawned {} (visual) for {} at ({:.2}, {:.2}, {:.2})",
+            "Spawned {} for {} at ({:.2}, {:.2}, {:.2})",
             template.unit_type, cult, position.x, position.y, position.z
         )
         .into(),

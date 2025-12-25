@@ -1,4 +1,4 @@
-use crate::units::{AuraType, Health, Leader, Selected, SelectionState, Team, Unit};
+use crate::units::{AuraType, Health, Team, Unit};
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
@@ -61,8 +61,6 @@ pub fn get_aura_emissive(aura_type: &AuraType) -> LinearRgba {
 pub fn update_health_bars(
     mut health_bar_query: Query<(&ChildOf, &mut Transform, &HealthBar, &HealthBarFill)>,
     health_query: Query<&Health, Changed<Health>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 ) {
     for (parent, mut transform, health_bar, _fill) in health_bar_query.iter_mut() {
         if let Ok(health) = health_query.get(parent.parent()) {
@@ -77,21 +75,6 @@ pub fn update_health_bars(
                 transform.scale.y = HEALTH_BAR_HEIGHT;
             }
         }
-    }
-}
-
-/// System to show/hide selection indicators based on selection state
-pub fn update_selection_indicators(
-    selection_state: Res<SelectionState>,
-    mut indicator_query: Query<(&ChildOf, &mut Visibility), With<SelectionIndicator>>,
-) {
-    for (parent, mut visibility) in indicator_query.iter_mut() {
-        let is_selected = selection_state.selected_entities.contains(&parent.parent());
-        *visibility = if is_selected {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        };
     }
 }
 
@@ -125,12 +108,12 @@ pub fn animate_leader_platforms(
 /// System to update veteran indicator visuals
 pub fn update_veteran_indicators(
     mut indicator_query: Query<(&mut Transform, &ChildOf), With<VeteranIndicator>>,
-    unit_query: Query<&Unit>,
+    status_query: Query<&crate::units::VeteranStatus>,
 ) {
     for (mut transform, parent) in indicator_query.iter_mut() {
-        if let Ok(unit) = unit_query.get(parent.parent()) {
+        if let Ok(status) = status_query.get(parent.parent()) {
             // Scale based on veteran tier
-            let scale = 0.5 + (unit.veteran_tier as f32 * 0.2);
+            let scale = 0.5 + (status.tier as f32 * 0.2);
             transform.scale = Vec3::splat(scale);
         }
     }

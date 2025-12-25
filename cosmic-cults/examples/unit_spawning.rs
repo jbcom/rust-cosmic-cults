@@ -5,12 +5,15 @@
 
 use bevy::prelude::*;
 use cosmic_cults::{GameUnitsPlugin, GameWorldPlugin};
-use game_physics::GamePhysicsPlugin;
+use avian3d::prelude::*;
+use big_brain::BigBrainPlugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(GamePhysicsPlugin::default())
+        .add_plugins(PhysicsPlugins::default())
+        .add_plugins(BigBrainPlugin::new(PreUpdate))
+        .add_plugins(MeshPickingPlugin)
         .add_plugins(GameWorldPlugin)
         .add_plugins(GameUnitsPlugin)
         .add_systems(Startup, setup)

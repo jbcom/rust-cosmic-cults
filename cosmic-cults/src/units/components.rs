@@ -61,6 +61,10 @@ pub enum AuraType {
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component)]
+pub struct Selected;
+
+#[derive(Component, Clone, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct SelectionPriority {
     pub value: u32,
 }
@@ -77,6 +81,8 @@ pub struct MovementPath {
 pub struct Formation {
     pub formation_type: FormationType,
     pub spacing: f32,
+    pub position_in_formation: Vec2,
+    pub leader_entity: Option<Entity>,
 }
 
 #[derive(Clone, Debug, PartialEq, Reflect, Default)]

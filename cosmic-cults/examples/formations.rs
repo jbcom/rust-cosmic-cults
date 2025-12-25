@@ -5,12 +5,15 @@
 
 use bevy::prelude::*;
 use cosmic_cults::{GameUnitsPlugin, GameWorldPlugin};
-use game_physics::GamePhysicsPlugin;
+use avian3d::prelude::*;
+use big_brain::BigBrainPlugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(GamePhysicsPlugin::default())
+        .add_plugins(PhysicsPlugins::default())
+        .add_plugins(BigBrainPlugin::new(PreUpdate))
+        .add_plugins(MeshPickingPlugin)
         .add_plugins(GameWorldPlugin)
         .add_plugins(GameUnitsPlugin)
         .add_systems(Startup, setup)
@@ -37,7 +40,7 @@ fn setup(mut commands: Commands) {
     info!("Formation demo started!");
     info!("Units should spawn through the GameUnitsPlugin");
     info!("Press 1-5 to change formation type:");
-    info!("  1: Line  2: Column  3: Box  4: Wedge  5: Circle");
+    info!("  1: Line  2: Box  3: Wedge  4: Circle");
 }
 
 fn keyboard_controls(keys: Res<ButtonInput<KeyCode>>) {
@@ -45,15 +48,12 @@ fn keyboard_controls(keys: Res<ButtonInput<KeyCode>>) {
         info!("Formation: Line");
     }
     if keys.just_pressed(KeyCode::Digit2) {
-        info!("Formation: Column");
-    }
-    if keys.just_pressed(KeyCode::Digit3) {
         info!("Formation: Box");
     }
-    if keys.just_pressed(KeyCode::Digit4) {
+    if keys.just_pressed(KeyCode::Digit3) {
         info!("Formation: Wedge");
     }
-    if keys.just_pressed(KeyCode::Digit5) {
+    if keys.just_pressed(KeyCode::Digit4) {
         info!("Formation: Circle");
     }
 }
