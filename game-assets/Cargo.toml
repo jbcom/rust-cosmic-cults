@@ -7,5 +7,5 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/jbcom/rust-cosmic-cults"
 
 [dependencies]
-bevy = { workspace = true, features = ["bevy_asset"] }
+bevy = { workspace = true, default-features = false, features = ["bevy_asset", "bevy_scene", "bevy_render", "bevy_pbr"] }
 serde = { workspace = true, features = ["derive"] }

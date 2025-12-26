@@ -6,6 +6,7 @@ use crate::{
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
+use game_assets::AssetRegistry;
 use game_physics::{
     AABB, CollisionMask, Friction, Mass, MovementController, MovementPath, MovementTarget,
     RigidBodyType, RigidBodyVariant, SpatialData, Velocity,
@@ -14,92 +15,72 @@ use std::collections::HashMap;
 #[cfg(feature = "web")]
 use web_sys::console;
 
+// Default fallback values for asset loading
+const DEFAULT_CULT: &str = "crimson_covenant";
+const DEFAULT_UNIT_TYPE: &str = "cultist";
+
 /// Resource containing loaded GLB model handles
+///
+/// This is now a wrapper around the centralized AssetRegistry from game-assets crate.
+/// Kept for backward compatibility with existing code.
 #[derive(Resource)]
 pub struct GameAssets {
-    // Unit models by cult
-    pub crimson_acolyte: Handle<Scene>,
-    pub crimson_warrior: Handle<Scene>,
-    pub crimson_berserker: Handle<Scene>,
-    pub deep_cultist: Handle<Scene>,
-    pub deep_guardian: Handle<Scene>,
-    pub deep_horror: Handle<Scene>,
-    pub void_initiate: Handle<Scene>,
-    pub void_assassin: Handle<Scene>,
-    pub void_harbinger: Handle<Scene>,
-
-    // Leader models
-    pub blood_lord: Handle<Scene>,
-    pub deep_priest: Handle<Scene>,
-    pub void_scholar: Handle<Scene>,
-
-    // Common meshes for UI elements
-    pub selection_mesh: Handle<Mesh>,
-    pub health_bar_mesh: Handle<Mesh>,
-    pub health_fill_mesh: Handle<Mesh>,
-    pub aura_mesh: Handle<Mesh>,
-    pub platform_mesh: Handle<Mesh>,
-    pub veteran_star_mesh: Handle<Mesh>,
+    registry: AssetRegistry,
 }
 
 impl GameAssets {
     pub fn load(asset_server: &AssetServer, meshes: &mut Assets<Mesh>) -> Self {
         Self {
-            // Load actual GLB models from game-assets folder
-            crimson_acolyte: asset_server
-                .load("assets/models/units/crimson/blood_acolyte.glb#Scene0"),
-            crimson_warrior: asset_server
-                .load("assets/models/units/crimson/blood_knight.glb#Scene0"),
-            crimson_berserker: asset_server
-                .load("assets/models/units/crimson/crimson_berserker.glb#Scene0"),
-            deep_cultist: asset_server.load("assets/models/units/deep/coastal_cultist.glb#Scene0"),
-            deep_guardian: asset_server.load("assets/models/units/deep/tide_warrior.glb#Scene0"),
-            deep_horror: asset_server.load("assets/models/units/deep/abyssal_horror.glb#Scene0"),
-            void_initiate: asset_server.load("assets/models/units/void/void_initiate.glb#Scene0"),
-            void_assassin: asset_server.load("assets/models/units/void/shadow_blade.glb#Scene0"),
-            void_harbinger: asset_server.load("assets/models/units/void/void_harbinger.glb#Scene0"),
-
-            // Leader models
-            blood_lord: asset_server.load("assets/models/leaders/crimson/blood_lord.glb#Scene0"),
-            deep_priest: asset_server.load("assets/models/leaders/deep/deep_priest.glb#Scene0"),
-            void_scholar: asset_server.load("assets/models/leaders/void/void_scholar.glb#Scene0"),
-
-            // Create procedural meshes for UI elements
-            selection_mesh: meshes.add(Torus::new(0.15, 1.5)),
-            health_bar_mesh: meshes.add(Cuboid::new(HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, 0.05)),
-            health_fill_mesh: meshes.add(Cuboid::new(
-                HEALTH_BAR_WIDTH * 0.95,
-                HEALTH_BAR_HEIGHT * 0.8,
-                0.04,
-            )),
-            aura_mesh: meshes.add(Sphere::new(1.0)),
-            platform_mesh: meshes.add(Cylinder::new(2.0, 0.3)),
-            veteran_star_mesh: meshes.add(Sphere::new(0.3)),
+            registry: AssetRegistry::load(asset_server, meshes),
         }
     }
 
+    // Backward compatibility getters that delegate to the registry
     pub fn get_unit_model(&self, unit_type: &str, cult: &str) -> Handle<Scene> {
-        match (cult, unit_type) {
-            ("crimson_covenant", "cultist") => self.crimson_acolyte.clone(),
-            ("crimson_covenant", "warrior") => self.crimson_warrior.clone(),
-            ("crimson_covenant", "berserker") => self.crimson_berserker.clone(),
-            ("deep_ones", "cultist") => self.deep_cultist.clone(),
-            ("deep_ones", "guardian") => self.deep_guardian.clone(),
-            ("deep_ones", "horror") => self.deep_horror.clone(),
-            ("void_seekers", "scout") => self.void_initiate.clone(),
-            ("void_seekers", "assassin") => self.void_assassin.clone(),
-            ("void_seekers", "harbinger") => self.void_harbinger.clone(),
-            _ => self.crimson_acolyte.clone(), // Default fallback
-        }
+        self.registry
+            .get_unit_scene(cult, unit_type)
+            .unwrap_or_else(|| {
+                // Fallback to default if not found
+                self.registry
+                    .get_unit_scene(DEFAULT_CULT, DEFAULT_UNIT_TYPE)
+                    .expect("Default unit model should always exist")
+            })
     }
 
     pub fn get_leader_model(&self, cult: &str) -> Handle<Scene> {
-        match cult {
-            "crimson_covenant" => self.blood_lord.clone(),
-            "deep_ones" => self.deep_priest.clone(),
-            "void_seekers" => self.void_scholar.clone(),
-            _ => self.blood_lord.clone(), // Default fallback
-        }
+        self.registry.get_leader_scene(cult).unwrap_or_else(|| {
+            // Fallback to default if not found
+            self.registry
+                .get_leader_scene(DEFAULT_CULT)
+                .expect("Default leader model should always exist")
+        })
+    }
+
+    // Direct access to common meshes
+    // Note: These methods clone the Handle (which is cheap), not the mesh data.
+    // The method approach provides a consistent API and the overhead is negligible.
+    pub fn selection_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.selection_ring.clone()
+    }
+
+    pub fn health_bar_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.health_bar_background.clone()
+    }
+
+    pub fn health_fill_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.health_bar_fill.clone()
+    }
+
+    pub fn aura_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.aura_sphere.clone()
+    }
+
+    pub fn platform_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.leader_platform.clone()
+    }
+
+    pub fn veteran_star_mesh(&self) -> Handle<Mesh> {
+        self.registry.common_meshes.veteran_star.clone()
     }
 }
 
@@ -218,7 +199,7 @@ pub fn spawn_unit(
             // === SELECTION INDICATOR (initially hidden) ===
             parent.spawn((
                 Name::new("SelectionIndicator"),
-                Mesh3d(assets.selection_mesh.clone()),
+                Mesh3d(assets.selection_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: cult_color.with_alpha(0.4),
                     alpha_mode: AlphaMode::Blend,
@@ -236,7 +217,7 @@ pub fn spawn_unit(
             parent
                 .spawn((
                     Name::new("HealthBar"),
-                    Mesh3d(assets.health_bar_mesh.clone()),
+                    Mesh3d(assets.health_bar_mesh()),
                     MeshMaterial3d(materials.add(StandardMaterial {
                         base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
                         unlit: true,
@@ -248,7 +229,7 @@ pub fn spawn_unit(
                     // Health fill bar
                     health_parent.spawn((
                         Name::new("HealthFill"),
-                        Mesh3d(assets.health_fill_mesh.clone()),
+                        Mesh3d(assets.health_fill_mesh()),
                         MeshMaterial3d(materials.add(StandardMaterial {
                             base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
                             emissive: LinearRgba::rgb(0.0, 0.5, 0.0),
@@ -375,7 +356,7 @@ pub fn spawn_leader(
             // === AURA VISUAL EFFECT ===
             parent.spawn((
                 Name::new("AuraVisual"),
-                Mesh3d(assets.aura_mesh.clone()),
+                Mesh3d(assets.aura_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: aura_color,
                     alpha_mode: AlphaMode::Blend,
@@ -394,7 +375,7 @@ pub fn spawn_leader(
             // === LEADER PLATFORM ===
             parent.spawn((
                 Name::new("LeaderPlatform"),
-                Mesh3d(assets.platform_mesh.clone()),
+                Mesh3d(assets.platform_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: cult_color,
                     metallic: 0.8,
@@ -409,7 +390,7 @@ pub fn spawn_leader(
             // === SELECTION INDICATOR ===
             parent.spawn((
                 Name::new("SelectionIndicator"),
-                Mesh3d(assets.selection_mesh.clone()),
+                Mesh3d(assets.selection_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: Color::srgba(1.0, 0.85, 0.0, 0.6), // Gold for leaders
                     alpha_mode: AlphaMode::Blend,
@@ -428,7 +409,7 @@ pub fn spawn_leader(
             parent
                 .spawn((
                     Name::new("HealthBar"),
-                    Mesh3d(assets.health_bar_mesh.clone()),
+                    Mesh3d(assets.health_bar_mesh()),
                     MeshMaterial3d(materials.add(StandardMaterial {
                         base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
                         unlit: true,
@@ -440,7 +421,7 @@ pub fn spawn_leader(
                 .with_children(|health_parent| {
                     health_parent.spawn((
                         Name::new("HealthFill"),
-                        Mesh3d(assets.health_fill_mesh.clone()),
+                        Mesh3d(assets.health_fill_mesh()),
                         MeshMaterial3d(materials.add(StandardMaterial {
                             base_color: Color::srgba(0.8, 0.6, 0.0, 0.9), // Gold health for leaders
                             emissive: LinearRgba::rgb(0.5, 0.4, 0.0),
@@ -458,7 +439,7 @@ pub fn spawn_leader(
             // === VETERAN STAR (leaders always have one) ===
             parent.spawn((
                 Name::new("VeteranIndicator"),
-                Mesh3d(assets.veteran_star_mesh.clone()),
+                Mesh3d(assets.veteran_star_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: Color::srgb(1.0, 0.85, 0.0),
                     emissive: LinearRgba::rgb(2.0, 1.7, 0.0),
@@ -775,7 +756,7 @@ pub fn spawn_unit_from_template(
             // === SELECTION INDICATOR ===
             parent.spawn((
                 Name::new("SelectionIndicator"),
-                Mesh3d(assets.selection_mesh.clone()),
+                Mesh3d(assets.selection_mesh()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: cult_color.with_alpha(0.4),
                     alpha_mode: AlphaMode::Blend,
@@ -793,7 +774,7 @@ pub fn spawn_unit_from_template(
             parent
                 .spawn((
                     Name::new("HealthBar"),
-                    Mesh3d(assets.health_bar_mesh.clone()),
+                    Mesh3d(assets.health_bar_mesh()),
                     MeshMaterial3d(materials.add(StandardMaterial {
                         base_color: Color::srgba(0.1, 0.1, 0.1, 0.8),
                         unlit: true,
@@ -804,7 +785,7 @@ pub fn spawn_unit_from_template(
                 .with_children(|health_parent| {
                     health_parent.spawn((
                         Name::new("HealthFill"),
-                        Mesh3d(assets.health_fill_mesh.clone()),
+                        Mesh3d(assets.health_fill_mesh()),
                         MeshMaterial3d(materials.add(StandardMaterial {
                             base_color: Color::srgba(0.0, 0.8, 0.0, 0.9),
                             emissive: LinearRgba::rgb(0.0, 0.5, 0.0),

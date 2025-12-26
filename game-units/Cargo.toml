@@ -23,6 +23,7 @@ bevy = { workspace = true, default-features = false, features = [
 # Game systems integration
 game-physics = { path = "../game-physics" }
 game-world = { path = "../game-world" }
+game-assets = { path = "../game-assets" }
 
 # Math and utilities
 glam = { workspace = true }

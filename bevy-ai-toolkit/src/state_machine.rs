@@ -246,7 +246,7 @@ impl HierarchicalStateMachine {
 
 /// System that updates all state machines
 pub fn state_machine_update_system(time: Res<Time>, mut query: Query<&mut AIStateMachine>) {
-    let delta = time.delta_seconds();
+    let delta = time.delta_secs();
 
     for mut state_machine in query.iter_mut() {
         state_machine.update(delta);

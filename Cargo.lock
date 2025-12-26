@@ -2040,6 +2040,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "bevy",
+ "game-assets",
  "game-physics",
  "game-world",
  "glam 0.30.9",

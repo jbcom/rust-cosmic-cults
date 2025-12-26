@@ -225,7 +225,7 @@ pub fn update_fog_system(
             fog.visible = visibility_state == VisibilityState::Visible;
 
             if was_visible && !fog.visible {
-                fog.last_seen_time = time.elapsed_seconds();
+                fog.last_seen_time = time.elapsed_secs();
             }
 
             // Update material based on new visibility state
