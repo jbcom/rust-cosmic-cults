@@ -1,11 +1,12 @@
 //! Map management and grid system for Cosmic Dominion
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::info;
 
 /// Resource representing the game map
-#[derive(Resource)]
+#[derive(Resource, Serialize, Deserialize, Clone, Debug)]
 pub struct GameMap {
     pub width: i32,
     pub height: i32,
@@ -27,7 +28,7 @@ impl Default for GameMap {
 }
 
 /// Information about a single map tile
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TileInfo {
     pub position: (i32, i32),
     pub tile_type: TileType,
@@ -37,7 +38,7 @@ pub struct TileInfo {
 }
 
 /// Types of tiles in the game world
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum TileType {
     Ground,
     Water,
@@ -55,7 +56,7 @@ pub struct MapTile {
 }
 
 /// Resource for pathfinding and movement
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Serialize, Deserialize, Clone, Debug)]
 pub struct PathfindingGrid {
     pub walkable: HashMap<(i32, i32), bool>,
     pub movement_costs: HashMap<(i32, i32), f32>,

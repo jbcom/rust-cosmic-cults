@@ -11,7 +11,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-bevy = { workspace = true, features = ["bevy_pbr", "bevy_render", "bevy_asset", "bevy_scene", "bevy_gltf"] }
+bevy = { workspace = true, features = ["bevy_pbr", "bevy_render", "bevy_asset", "bevy_scene", "bevy_gltf", "bevy_gizmos"] }
 # bevy_rapier3d = { workspace = true }
 bevy_rand = { workspace = true }
 game-assets = { path = "../game-assets" }
@@ -19,6 +19,8 @@ rand = { workspace = true }
 indexmap = { workspace = true }
 ahash = { workspace = true }
 serde = { workspace = true }
+bincode = { workspace = true }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
 tracing = "0.1"
 
 [features]

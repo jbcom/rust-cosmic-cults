@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use web_sys::console;
 
 // Health component
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct Health {
     pub current: f32,
     pub maximum: f32,
@@ -21,7 +21,7 @@ impl Health {
 }
 
 // Core unit component - the main entity type for units
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct Unit {
     pub cult: String,
     pub unit_type: String,
@@ -137,7 +137,7 @@ impl Default for Selectable {
 // See game_physics::components::MovementTarget
 
 // Base stats component for buff calculations
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct BaseStats {
     pub base_attack_damage: f32,
     pub base_health: f32,
@@ -159,7 +159,7 @@ impl Default for BaseStats {
 }
 
 // Experience component for unit progression
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct Experience {
     pub current: u32,
     pub total_earned: u32,
@@ -181,7 +181,7 @@ impl Default for Experience {
 }
 
 // Veteran status component
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct VeteranStatus {
     pub tier: VeteranTier,
     pub promotion_ready: bool,
@@ -200,7 +200,7 @@ impl Default for VeteranStatus {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum VeteranTier {
     Recruit,
     Regular,
@@ -209,7 +209,7 @@ pub enum VeteranTier {
     Legendary,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VeteranBonus {
     pub health_multiplier: f32,
     pub damage_multiplier: f32,
@@ -268,7 +268,7 @@ pub struct Formation {
     pub spacing: f32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum FormationType {
     Line,
     Column,

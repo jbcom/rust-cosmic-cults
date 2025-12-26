@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy::render::render_resource::PrimitiveTopology;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Terrain tile component representing a single tile in the game world
@@ -19,7 +20,7 @@ pub struct TerrainTile {
 }
 
 /// Biome types in the game world
-#[derive(Component, Clone, Copy, Debug, PartialEq)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum BiomeType {
     CorruptedForest,
     BloodPlains,
@@ -68,7 +69,7 @@ impl BiomeType {
 }
 
 /// Resource for terrain generation configuration
-#[derive(Resource)]
+#[derive(Resource, Serialize, Deserialize)]
 pub struct TerrainConfig {
     pub tile_size: f32,
     pub chunk_size: i32,
