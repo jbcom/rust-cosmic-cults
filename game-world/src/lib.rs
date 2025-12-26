@@ -8,11 +8,13 @@ use tracing::info;
 
 pub mod fog;
 pub mod map;
+pub mod save_load;
 pub mod spawning;
 pub mod terrain;
 
 pub use fog::{Faction, FogOfWar, VisibilityMap, VisionProvider};
 pub use map::{GameMap, MapTile, PathfindingGrid, find_path};
+pub use save_load::{GameState, SerializableLeader, SerializableUnit, apply_game_state, load_game, save_game};
 pub use spawning::{CultLeader, InitialCreature, LeadershipBuilding, PlayerUnit, Totem};
 pub use terrain::{BiomeType, TerrainConfig, TerrainTile};
 
