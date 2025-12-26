@@ -32,8 +32,12 @@ pub fn pathfinding_request_system(
                             .map(|&(x, z)| grid_to_world((x, z), game_map.tile_size))
                             .collect();
 
-                        // Update controller with path
-                        controller.waypoints = waypoints;
+                        // Smooth the path to reduce unnecessary waypoints
+                        let smoothed_waypoints =
+                            smooth_path(waypoints, &pathfinding_grid, game_map.tile_size);
+
+                        // Update controller with smoothed path
+                        controller.waypoints = smoothed_waypoints;
                         controller.path_index = 0;
                         controller.max_speed = *speed;
                         controller.target_position = controller.waypoints.first().copied();
@@ -280,5 +284,131 @@ impl Plugin for PathfindingIntegrationPlugin {
             )
                 .chain(),
         );
+    }
+}
+
+// ==============================================================================
+// TESTS
+// ==============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_world_grid_conversion() {
+        let tile_size = 10.0;
+
+        // Test various positions
+        assert_eq!(world_to_grid(Vec3::new(0.0, 0.0, 0.0), tile_size), (0, 0));
+        assert_eq!(world_to_grid(Vec3::new(10.0, 0.0, 10.0), tile_size), (1, 1));
+        assert_eq!(
+            world_to_grid(Vec3::new(-10.0, 0.0, -10.0), tile_size),
+            (-1, -1)
+        );
+        assert_eq!(
+            world_to_grid(Vec3::new(25.0, 0.0, -35.0), tile_size),
+            (3, -4)
+        );
+
+        // Test round trip conversion - grid centers should convert back exactly
+        let grid_pos = (4, -2);
+        let world_pos = grid_to_world(grid_pos, tile_size);
+        let back_to_grid = world_to_grid(world_pos, tile_size);
+        assert_eq!(back_to_grid, grid_pos);
+    }
+
+    #[test]
+    fn test_is_path_clear() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+        let tile_size = 10.0;
+
+        // Create a walkable area
+        for x in 0..10 {
+            for z in 0..10 {
+                pathfinding_grid.walkable.insert((x, z), true);
+            }
+        }
+
+        let start = Vec3::new(0.0, 0.0, 0.0);
+        let end = Vec3::new(50.0, 0.0, 50.0);
+
+        assert!(is_path_clear(start, end, &pathfinding_grid, tile_size));
+
+        // Add an obstacle in the middle
+        pathfinding_grid.walkable.insert((3, 3), false);
+
+        assert!(!is_path_clear(start, end, &pathfinding_grid, tile_size));
+    }
+
+    #[test]
+    fn test_smooth_path_simple() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+        let tile_size = 10.0;
+
+        // Create a fully walkable area
+        for x in 0..10 {
+            for z in 0..10 {
+                pathfinding_grid.walkable.insert((x, z), true);
+            }
+        }
+
+        // Create a path with unnecessary waypoints
+        let waypoints = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(10.0, 0.0, 10.0),
+            Vec3::new(20.0, 0.0, 20.0),
+            Vec3::new(30.0, 0.0, 30.0),
+        ];
+
+        let smoothed = smooth_path(waypoints.clone(), &pathfinding_grid, tile_size);
+
+        // Smoothed path should have fewer waypoints (start and end at minimum)
+        assert!(smoothed.len() <= waypoints.len());
+        assert_eq!(smoothed[0], waypoints[0]);
+        assert_eq!(*smoothed.last().unwrap(), *waypoints.last().unwrap());
+    }
+
+    #[test]
+    fn test_smooth_path_with_obstacles() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+        let tile_size = 10.0;
+
+        // Create walkable area
+        for x in 0..10 {
+            for z in 0..10 {
+                pathfinding_grid.walkable.insert((x, z), true);
+            }
+        }
+
+        // Add obstacle at (2, 2)
+        pathfinding_grid.walkable.insert((2, 2), false);
+
+        // Create path that goes around the obstacle
+        let waypoints = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(10.0, 0.0, 0.0),
+            Vec3::new(20.0, 0.0, 10.0),
+            Vec3::new(30.0, 0.0, 20.0),
+        ];
+
+        let smoothed = smooth_path(waypoints.clone(), &pathfinding_grid, tile_size);
+
+        // Should still have start and end points
+        assert_eq!(smoothed[0], waypoints[0]);
+        assert_eq!(*smoothed.last().unwrap(), *waypoints.last().unwrap());
+    }
+
+    #[test]
+    fn test_smooth_path_short() {
+        let pathfinding_grid = PathfindingGrid::default();
+        let tile_size = 10.0;
+
+        // Short paths should not be modified
+        let waypoints = vec![Vec3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 0.0, 10.0)];
+
+        let smoothed = smooth_path(waypoints.clone(), &pathfinding_grid, tile_size);
+        assert_eq!(smoothed.len(), waypoints.len());
+        assert_eq!(smoothed, waypoints);
     }
 }

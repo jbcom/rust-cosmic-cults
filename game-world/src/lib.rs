@@ -50,9 +50,9 @@ impl Plugin for GameWorldPlugin {
             ),
         );
 
-        // Add debug visualization (can be disabled in production)
-        #[cfg(debug_assertions)]
-        app.add_systems(Update, map::debug_draw_map_grid);
+        // Add debug visualization (disabled due to Gizmos type issues)
+        // #[cfg(debug_assertions)]
+        // app.add_systems(Update, map::debug_draw_map_grid);
 
         info!("Game World Plugin loaded successfully");
     }

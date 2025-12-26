@@ -331,32 +331,142 @@ fn manhattan_distance(a: (i32, i32), b: (i32, i32)) -> i32 {
 }
 
 /// Debug system to visualize the map grid
-pub fn debug_draw_map_grid(game_map: Res<GameMap>, mut gizmos: Gizmos) {
-    let half_width = game_map.width / 2;
-    let half_height = game_map.height / 2;
+/// TODO: Re-enable when Gizmos type compatibility is resolved with Bevy 0.17
+#[allow(dead_code)]
+pub fn debug_draw_map_grid() {
+    // This function is currently disabled due to Gizmos type compatibility issues.
+    // The debug grid visualization will be restored in a future update.
+}
 
-    // Draw grid lines
-    for x in -half_width..=half_width {
-        let start = grid_to_world(x, -half_height, game_map.tile_size);
-        let end = grid_to_world(x, half_height, game_map.tile_size);
-        gizmos.line(start, end, Color::srgba(0.2, 0.2, 0.2, 0.3));
+// ==============================================================================
+// TESTS
+// ==============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grid_world_conversion() {
+        let tile_size = 10.0;
+        let grid_pos = (5, -3);
+
+        // Convert grid to world
+        let world_pos = grid_to_world(grid_pos.0, grid_pos.1, tile_size);
+        assert_eq!(world_pos, Vec3::new(50.0, 0.0, -30.0));
+
+        // Convert back to grid
+        let converted_grid = world_to_grid(world_pos, tile_size);
+        assert_eq!(converted_grid, grid_pos);
     }
 
-    for z in -half_height..=half_height {
-        let start = grid_to_world(-half_width, z, game_map.tile_size);
-        let end = grid_to_world(half_width, z, game_map.tile_size);
-        gizmos.line(start, end, Color::srgba(0.2, 0.2, 0.2, 0.3));
+    #[test]
+    fn test_pathfinding_straight_line() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+
+        // Create a simple walkable grid
+        for x in 0..10 {
+            for z in 0..10 {
+                pathfinding_grid.walkable.insert((x, z), true);
+                pathfinding_grid.movement_costs.insert((x, z), 1.0);
+            }
+        }
+
+        // Find path from (0,0) to (5,5)
+        let path = find_path((0, 0), (5, 5), &pathfinding_grid);
+        assert!(path.is_some(), "Should find a path");
+
+        let path = path.unwrap();
+        assert!(path.len() >= 2, "Path should have at least start and end");
+        assert_eq!(path[0], (0, 0), "Path should start at origin");
+        assert_eq!(*path.last().unwrap(), (5, 5), "Path should end at goal");
     }
 
-    // Highlight starting position
-    let start_pos = grid_to_world(
-        game_map.starting_position.0,
-        game_map.starting_position.1,
-        game_map.tile_size,
-    );
-    gizmos.circle(
-        start_pos + Vec3::Y * 0.1,
-        game_map.tile_size * 0.4,
-        Color::srgb(0.0, 1.0, 0.0),
-    );
+    #[test]
+    fn test_pathfinding_with_obstacles() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+
+        // Create walkable grid
+        for x in 0..10 {
+            for z in 0..10 {
+                pathfinding_grid.walkable.insert((x, z), true);
+                pathfinding_grid.movement_costs.insert((x, z), 1.0);
+            }
+        }
+
+        // Add a wall of obstacles from (3,0) to (3,7)
+        for z in 0..8 {
+            pathfinding_grid.walkable.insert((3, z), false);
+        }
+
+        // Find path from (0,3) to (6,3)
+        let path = find_path((0, 3), (6, 3), &pathfinding_grid);
+        assert!(path.is_some(), "Should find path around obstacles");
+
+        let path = path.unwrap();
+        // Path should go around the wall, not through it
+        for &(x, z) in &path {
+            if z < 8 {
+                assert_ne!(x, 3, "Path should not go through obstacle at x=3");
+            }
+        }
+    }
+
+    #[test]
+    fn test_pathfinding_no_path() {
+        let mut pathfinding_grid = PathfindingGrid::default();
+
+        // Create a small walkable area
+        for x in 0..3 {
+            for z in 0..3 {
+                pathfinding_grid.walkable.insert((x, z), true);
+                pathfinding_grid.movement_costs.insert((x, z), 1.0);
+            }
+        }
+
+        // Try to find path to an unreachable tile
+        let path = find_path((0, 0), (10, 10), &pathfinding_grid);
+        assert!(
+            path.is_none(),
+            "Should not find path to unreachable location"
+        );
+    }
+
+    #[test]
+    fn test_manhattan_distance() {
+        assert_eq!(manhattan_distance((0, 0), (0, 0)), 0);
+        assert_eq!(manhattan_distance((0, 0), (3, 4)), 700); // (3+4)*100
+        assert_eq!(manhattan_distance((5, 5), (2, 1)), 700); // (3+4)*100
+    }
+
+    #[test]
+    fn test_tile_walkability() {
+        assert!(is_tile_walkable(TileType::Ground, 0.0));
+        assert!(is_tile_walkable(TileType::Bridge, 0.0));
+        assert!(!is_tile_walkable(TileType::Water, 0.0));
+        assert!(!is_tile_walkable(TileType::Cliff, 0.0));
+        assert!(
+            is_tile_walkable(TileType::Void, 0.5),
+            "Void with low corruption should be walkable"
+        );
+        assert!(
+            !is_tile_walkable(TileType::Void, 0.95),
+            "Void with high corruption should not be walkable"
+        );
+    }
+
+    #[test]
+    fn test_movement_cost() {
+        // Ground should have cost 1.0
+        assert_eq!(calculate_movement_cost(TileType::Ground, 0.0), 1.0);
+
+        // Water and Cliff should have very high cost
+        assert!(calculate_movement_cost(TileType::Water, 0.0) > 100.0);
+        assert!(calculate_movement_cost(TileType::Cliff, 0.0) > 100.0);
+
+        // Corruption should increase movement cost
+        let base_cost = calculate_movement_cost(TileType::Ground, 0.0);
+        let corrupted_cost = calculate_movement_cost(TileType::Ground, 0.5);
+        assert!(corrupted_cost > base_cost);
+    }
 }
