@@ -1,6 +1,6 @@
 # Cosmic Cults (Rust)
 
-[![CI](https://github.com/jbcom/rust-cosmic-cults/workflows/CI/badge.svg)](https://github.com/jbcom/rust-cosmic-cults/actions)
+[![CI](https://github.com/arcade-cabinet/cosmic-cults/workflows/CI/badge.svg)](https://github.com/arcade-cabinet/cosmic-cults/actions)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
 
 A Lovecraftian 4X real-time strategy game built with the Bevy game engine, targeting WebGL/WASM for browser-based gameplay.
@@ -9,22 +9,28 @@ A Lovecraftian 4X real-time strategy game built with the Bevy game engine, targe
 
 - 🎮 **3D RTS Mechanics**: Real-time strategy with proper 3D rendering
 - 👁️ **Cult Management**: Control one of three distinct cults
-- 🧠 **Advanced AI**: Behavior trees, utility AI, state machines
-- ⚔️ **Combat Systems**: Damage, effects, XP progression
+- 🧠 **Advanced AI**: Powered by `big-brain` Utility AI
+- ⚔️ **Combat Systems**: Standardized combat and XP progression
 - 🌫️ **Fog of War**: Exploration and visibility mechanics
 - 🌐 **Web-Native**: WASM compilation for browser play
 
-## Crate Structure
+## Project Structure
+
+This project has been consolidated into a single-crate workspace for maximum efficiency and modern Bevy integration.
 
 | Crate | Description | Status |
 |-------|-------------|--------|
-| `game-ai` | AI systems, behavior trees, utility AI | 🚧 Migration |
-| `game-combat` | Combat, damage, effects, XP | 🚧 Migration |
-| `game-world` | World generation, terrain, fog of war | 🚧 Migration |
-| `game-units` | Unit management, formations | 🚧 Migration |
-| `game-physics` | Physics integration with Avian3D | 🚧 Migration |
-| `game-assets` | Asset loading and management | 🚧 Migration |
-| `game-runner` | Main game runner | 🚧 Migration |
+| `cosmic-cults` | Unified game crate using modern ecosystem plugins | ✅ Active |
+
+## Ecosystem Integration
+
+We leverage industry-standard Bevy plugins to avoid custom "from-scratch" logic:
+- **`avian3d`**: Robust 3D physics and collision
+- **`big-brain`**: Utility AI for complex unit behaviors
+- **`leafwing-input-manager`**: Advanced input mapping
+- **`bevy_rts_camera`**: RTS-style camera controls
+- **`bevy_picking`**: Built-in 3D mesh interaction and selection
+- **`bevy_egui`**: Professional UI integration
 
 ## Development
 
@@ -65,7 +71,7 @@ cargo doc --no-deps --all-features --open
 
 ### Running Examples
 
-See [game-runner/examples/README.md](game-runner/examples/README.md) for detailed information.
+See [cosmic-cults/examples/README.md](cosmic-cults/examples/README.md) for detailed information.
 
 ```bash
 # Run a native example
@@ -125,10 +131,10 @@ All code is automatically checked by CI on every push and pull request:
 
 ## Documentation
 
-- [Online Documentation](https://jbcom.github.io/rust-cosmic-cults/)
+- [Online Documentation](https://arcade-cabinet.github.io/cosmic-cults/)
 - [Rust Standards](RUST_STANDARDS.md) - Development standards and tooling
 - [WASM Demo](WASM_DEMO.md) - WebAssembly build and deployment
-- [Examples](game-runner/examples/README.md) - Runnable examples
+- [Examples](cosmic-cults/examples/README.md) - Runnable examples
 - [Architecture Docs](docs/) - Detailed architecture documentation
 
 ## License

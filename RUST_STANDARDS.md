@@ -123,7 +123,7 @@ Documentation is built as part of CI and fails on warnings.
 
 ### Location
 
-Examples are located in `game-runner/examples/`:
+Examples are located in `cosmic-cults/examples/`:
 
 - `basic_physics.rs` - Physics system demonstration
 - `unit_spawning.rs` - Unit spawning demonstration  
