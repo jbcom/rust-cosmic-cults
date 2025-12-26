@@ -321,7 +321,7 @@ pub fn utility_ai_system(
     time: Res<Time>,
     mut query: Query<(Entity, &mut UtilityAI), With<UtilityAI>>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (_entity, mut utility_ai) in query.iter_mut() {
         // Check if it's time to update this AI
