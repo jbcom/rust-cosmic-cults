@@ -10,8 +10,9 @@ ai_client = "generator-ai"
 template = "bevy-rts"
 
 [integration]
-ai_toolkit = "bevy-ai-toolkit"
-combat_system = "bevy-combat"
+ai_toolkit = "big-brain"
+physics_engine = "avian3d"
+selection_system = "bevy_picking"
 
 [content]
 cults = [

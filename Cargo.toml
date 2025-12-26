@@ -7,9 +7,9 @@ authors = ["Jon Bogaty <jon@jonbogaty.com>"]
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/jbcom/rust-cosmic-cults"
-homepage = "https://github.com/jbcom/rust-cosmic-cults"
-documentation = "https://github.com/jbcom/rust-cosmic-cults"
+repository = "https://github.com/arcade-cabinet/cosmic-cults"
+homepage = "https://github.com/arcade-cabinet/cosmic-cults"
+documentation = "https://github.com/arcade-cabinet/cosmic-cults"
 keywords = ["game", "rts", "lovecraft", "bevy", "wasm"]
 categories = ["games", "wasm"]
 
