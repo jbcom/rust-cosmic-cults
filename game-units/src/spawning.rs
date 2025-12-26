@@ -1,7 +1,7 @@
 use crate::visuals::*;
 use crate::{
-    AuraType, BaseStats, Experience, Leader, Selectable, Team, Unit, VeteranBonus, VeteranStatus,
-    VeteranTier,
+    AuraType, BaseStats, Experience, Faction, Leader, Selectable, Team, Unit, VeteranBonus,
+    VeteranStatus, VeteranTier, VisionProvider,
 };
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
@@ -213,6 +213,10 @@ pub fn spawn_unit(
                 visual_scale: 1.0,
                 bonuses: VeteranBonus::default(),
             },
+            VisionProvider {
+                sight_range: 30.0,
+                faction: get_faction(team_id),
+            },
         ))
         .with_children(|parent| {
             // === SELECTION INDICATOR (initially hidden) ===
@@ -338,6 +342,8 @@ pub fn spawn_leader(
                 selection_priority: 10,
                 selection_radius: 2.0,
             },
+        ))
+        .insert((
             MovementTarget::new(position.x, position.z, position.z, 6.0),
             MovementPath {
                 waypoints: Vec::new(),
@@ -369,6 +375,10 @@ pub fn spawn_leader(
                     speed_multiplier: 1.2,
                     xp_multiplier: 1.0,
                 },
+            },
+            VisionProvider {
+                sight_range: 40.0,
+                faction: get_faction(team_id),
             },
         ))
         .with_children(|parent| {
@@ -540,6 +550,14 @@ fn get_cult_color(cult: &str) -> Color {
         "deep_ones" => Color::srgba(0.2, 0.2, 0.8, 1.0),
         "void_seekers" => Color::srgba(0.6, 0.2, 0.8, 1.0),
         _ => Color::srgba(0.5, 0.5, 0.5, 1.0),
+    }
+}
+
+// Get faction from team_id
+fn get_faction(team_id: u32) -> Faction {
+    match team_id {
+        1 => Faction::Player,
+        _ => Faction::Enemy,
     }
 }
 
@@ -768,6 +786,10 @@ pub fn spawn_unit_from_template(
                 promotion_ready: false,
                 visual_scale: 1.0,
                 bonuses: VeteranBonus::default(),
+            },
+            VisionProvider {
+                sight_range: 30.0,
+                faction: get_faction(team_id),
             },
         ))
         .with_children(|parent| {

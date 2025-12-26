@@ -32,6 +32,9 @@ pub use spawning::{GameAssets, UnitTemplate, UnitTemplates, init_game_assets};
 // Re-export physics types units need
 pub use game_physics::{MovementPath, MovementTarget};
 
+// Re-export fog of war types for unit vision
+pub use game_world::{Faction, VisionProvider};
+
 // Main plugin for the game-units crate
 #[derive(Default)]
 pub struct GameUnitsPlugin;
