@@ -248,7 +248,7 @@ pub fn state_execution_system(
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    let delta = time.delta_seconds();
+    let delta = time.delta_secs();
 
     for (entity, mut state_machine, transform, unit, team) in query.iter_mut() {
         state_machine.update(delta);

@@ -512,7 +512,7 @@ pub fn behavior_tree_execution_system(
     world: &World,
     mut commands: Commands,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (entity, mut tree, transform) in query.iter_mut() {
         // Check if it's time to tick this behavior tree

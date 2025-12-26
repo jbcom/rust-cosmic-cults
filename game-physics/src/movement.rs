@@ -17,7 +17,7 @@ pub fn physics_movement_system(
         Option<&Friction>,
     )>,
 ) {
-    let dt = time.delta_seconds();
+    let dt = time.delta_secs();
 
     for (mut transform, mut velocity, acceleration, mass, friction) in query.iter_mut() {
         let mass_value = mass.map(|m| m.value).unwrap_or(1.0);
@@ -71,7 +71,7 @@ pub fn simple_movement_system(
             target.reached = true;
             transform.translation = target_position;
         } else {
-            let movement = direction.normalize() * target.speed * time.delta_seconds();
+            let movement = direction.normalize() * target.speed * time.delta_secs();
             transform.translation += movement;
 
             // Rotate to face movement direction
@@ -81,7 +81,7 @@ pub fn simple_movement_system(
                     Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
                 transform.rotation = transform
                     .rotation
-                    .slerp(target_rotation, 5.0 * time.delta_seconds());
+                    .slerp(target_rotation, 5.0 * time.delta_secs());
             }
         }
     }
@@ -92,7 +92,7 @@ pub fn pathfinding_movement_system(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut MovementController)>,
 ) {
-    let dt = time.delta_seconds();
+    let dt = time.delta_secs();
 
     for (mut transform, mut controller) in query.iter_mut() {
         // Check if we have a current target
@@ -185,7 +185,7 @@ pub fn waypoint_movement_system(
             }
         } else {
             // Move toward current waypoint
-            let movement = direction.normalize() * path.movement_speed * time.delta_seconds();
+            let movement = direction.normalize() * path.movement_speed * time.delta_secs();
             transform.translation += movement;
 
             // Rotate to face movement direction
@@ -195,7 +195,7 @@ pub fn waypoint_movement_system(
                     Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
                 transform.rotation = transform
                     .rotation
-                    .slerp(target_rotation, 5.0 * time.delta_seconds());
+                    .slerp(target_rotation, 5.0 * time.delta_secs());
             }
         }
     }
