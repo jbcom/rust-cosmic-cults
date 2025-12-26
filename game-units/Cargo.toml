@@ -20,6 +20,9 @@ bevy = { workspace = true, default-features = false, features = [
     "bevy_pbr"
 ]}
 
+# Physics engine
+avian3d = { workspace = true }
+
 # Game systems integration
 game-physics = { path = "../game-physics" }
 game-world = { path = "../game-world" }
