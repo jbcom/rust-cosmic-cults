@@ -22,7 +22,7 @@ pub fn combat_execution_system(
     for (entity, state, targeting, stats, mut cooldown, transform) in query.iter_mut() {
         // Only attack if we're in the attacking state
         if let CombatState::Attacking(_target) = state
-            && cooldown.tick(time.delta_seconds())
+            && cooldown.tick(time.delta_secs())
         {
             // Check if target is still valid and in range
             if let Some(current_target) = targeting.current_target
@@ -70,7 +70,7 @@ pub fn status_effect_system(
     time: Res<Time>,
 ) {
     for (entity, mut status) in query.iter_mut() {
-        status.remaining -= time.delta_seconds();
+        status.remaining -= time.delta_secs();
 
         if status.remaining <= 0.0 {
             commands.entity(entity).remove::<StatusEffect>();
@@ -81,11 +81,11 @@ pub fn status_effect_system(
 /// System to handle shield regeneration
 pub fn shield_regeneration_system(mut query: Query<&mut Shield>, time: Res<Time>) {
     for mut shield in query.iter_mut() {
-        shield.time_since_damage += time.delta_seconds();
+        shield.time_since_damage += time.delta_secs();
 
         if shield.time_since_damage >= shield.regeneration_delay {
             shield.current =
-                (shield.current + shield.regeneration_rate * time.delta_seconds()).min(shield.maximum);
+                (shield.current + shield.regeneration_rate * time.delta_secs()).min(shield.maximum);
         }
     }
 }
@@ -101,12 +101,12 @@ pub fn combat_log_system(
     for event in damage_events.read() {
         if let Ok(mut log) = query.get_mut(event.attacker) {
             log.damage_dealt += event.amount;
-            log.last_combat_time = time.elapsed_seconds();
+            log.last_combat_time = time.elapsed_secs();
         }
 
         if let Ok(mut log) = query.get_mut(event.target) {
             log.damage_taken += event.amount;
-            log.last_combat_time = time.elapsed_seconds();
+            log.last_combat_time = time.elapsed_secs();
         }
     }
 
@@ -129,7 +129,7 @@ pub fn projectile_system(
     mut damage_events: MessageWriter<DamageEvent>,
 ) {
     for (entity, mut projectile, transform) in query.iter_mut() {
-        projectile.remaining_lifetime -= time.delta_seconds();
+        projectile.remaining_lifetime -= time.delta_secs();
 
         if projectile.remaining_lifetime <= 0.0 {
             commands.entity(entity).despawn();
@@ -176,7 +176,7 @@ pub fn cleanup_dead_entities(
 ) {
     for (entity, dead) in query.iter() {
         // Wait a bit before despawning to allow death animations
-        if time.elapsed_seconds() - dead.death_time > 2.0 {
+        if time.elapsed_secs() - dead.death_time > 2.0 {
             commands.entity(entity).despawn();
         }
     }

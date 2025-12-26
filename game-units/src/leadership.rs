@@ -43,7 +43,7 @@ pub fn leader_abilities_system(
     mut leader_query: Query<(&mut Leader, &Transform)>,
     unit_query: Query<(Entity, &Transform, &Unit), Without<Leader>>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (mut leader, leader_transform) in leader_query.iter_mut() {
         if !leader.alive {
@@ -189,7 +189,7 @@ pub fn aura_cleanup_system(
     time: Res<Time>,
     aura_query: Query<(Entity, &AuraBuff)>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (entity, aura_buff) in aura_query.iter() {
         if current_time >= aura_buff.expires_at {
@@ -208,7 +208,7 @@ pub fn passive_aura_system(
     leader_query: Query<(&Transform, &Leader)>,
     unit_query: Query<(Entity, &Transform, &Unit), Without<Leader>>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (leader_transform, leader) in leader_query.iter() {
         if !leader.alive {

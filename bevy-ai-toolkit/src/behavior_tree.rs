@@ -370,7 +370,7 @@ pub fn behavior_tree_system(
     world: &World,
     mut query: Query<(Entity, &mut BehaviorTree)>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     // Collect entities that need ticking
     let mut trees_to_tick = Vec::new();
