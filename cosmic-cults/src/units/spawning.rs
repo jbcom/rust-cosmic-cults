@@ -1,7 +1,7 @@
 use crate::units::visuals::*;
 use crate::units::{
     AuraType, Experience, Leader, SelectionPriority, Team, Unit, VeteranStatus, Health, MovementPath,
-    MoveToAction, HasPathScorer,
+    MoveToAction, HasPathScorer, Resources, GatherAction, NearResourceScorer,
 };
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
@@ -158,11 +158,13 @@ pub fn spawn_unit(
                 value: 1,
             },
             MovementPath::default(),
+            Resources::default(),
         ))
         .insert((
             // === AI COMPONENTS (big-brain) ===
             Thinker::build()
                 .picker(FirstToScore::new(0.1))
+                .when(NearResourceScorer, GatherAction)
                 .when(HasPathScorer, MoveToAction),
         ))
         .insert((
@@ -699,11 +701,13 @@ pub fn spawn_unit_from_template(
                 value: 1,
             },
             MovementPath::default(),
+            Resources::default(),
         ))
         .insert((
             // === AI COMPONENTS (big-brain) ===
             Thinker::build()
                 .picker(FirstToScore::new(0.1))
+                .when(NearResourceScorer, GatherAction)
                 .when(HasPathScorer, MoveToAction),
         ))
         .insert((

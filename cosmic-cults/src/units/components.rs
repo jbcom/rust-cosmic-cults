@@ -108,3 +108,28 @@ pub struct Experience {
 pub struct VeteranStatus {
     pub tier: u32,
 }
+
+// === Resources ===
+
+#[derive(Component, Clone, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct Resources {
+    pub energy: f32,
+    pub materials: f32,
+    pub favor: f32,
+}
+
+#[derive(Component, Clone, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct ResourceNode {
+    pub resource_type: ResourceType,
+    pub amount: f32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Reflect, Default, Serialize, Deserialize)]
+pub enum ResourceType {
+    #[default]
+    Energy,
+    Materials,
+    Favor,
+}

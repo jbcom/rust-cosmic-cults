@@ -2,6 +2,7 @@
 
 use crate::assets::{Cult, models};
 use crate::world::fog::{Faction, VisionProvider};
+use crate::units::components::{ResourceNode, ResourceType};
 use bevy::asset::RenderAssetUsages;
 use bevy::mesh::Indices;
 use bevy::prelude::*;
@@ -113,6 +114,43 @@ pub fn spawn_starting_scene(
     // Spawn additional atmospheric elements
     spawn_cult_banners(&mut commands, &mut meshes, &mut materials, Cult::Crimson);
     spawn_ritual_circle(&mut commands, &mut meshes, &mut materials, Vec3::ZERO);
+
+    // Spawn some resource nodes
+    spawn_resource_node(&mut commands, &mut meshes, &mut materials, Vec3::new(10.0, 0.0, 0.0), ResourceType::Energy);
+    spawn_resource_node(&mut commands, &mut meshes, &mut materials, Vec3::new(-10.0, 0.0, 5.0), ResourceType::Materials);
+}
+
+/// Spawn a resource node
+fn spawn_resource_node(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    position: Vec3,
+    resource_type: ResourceType,
+) {
+    let (color, name) = match resource_type {
+        ResourceType::Energy => (Color::srgb(0.0, 0.8, 1.0), "Energy Node"),
+        ResourceType::Materials => (Color::srgb(0.8, 0.5, 0.2), "Material Node"),
+        ResourceType::Favor => (Color::srgb(1.0, 0.0, 0.8), "Favor Node"),
+    };
+
+    let mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
+    let material = materials.add(StandardMaterial {
+        base_color: color,
+        emissive: LinearRgba::from(color) * 0.5,
+        ..default()
+    });
+
+    commands.spawn((
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        Transform::from_translation(position + Vec3::Y * 1.0),
+        ResourceNode {
+            resource_type,
+            amount: 500.0,
+        },
+        Name::new(name),
+    ));
 }
 
 /// Spawn the leadership building
