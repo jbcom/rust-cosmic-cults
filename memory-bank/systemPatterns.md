@@ -12,5 +12,7 @@ The project follows Bevy's ECS pattern strictly. It is organized into a single w
 ## Data Flow
 1. **Input**: `leafwing-input-manager` and `bevy_picking` capture user intent.
 2. **AI**: `big-brain` thinkers process the world state and choose actions.
+   - **MoveToAction**: Follows `MovementPath` waypoints.
+   - **GatherAction**: Extracts resources from `ResourceNode`s within range.
 3. **Physics**: `avian3d` handles spatial simulation and collisions.
-4. **World**: Procedural generation systems build the map and spawn entities at startup.
+4. **World**: Procedural generation systems build the map and spawn entities (including resource nodes) at startup.

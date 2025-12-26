@@ -7,6 +7,7 @@
 - [x] Migration to Bevy 0.17.
 - [x] Implementation of new AI (`big-brain`) and Selection (`bevy_picking`) systems.
 - [x] Setup of the new permanent repository at `arcade-cabinet/cosmic-cults`.
+- [x] Basic resource gathering mechanics (Energy, Materials, Favor).
 
 ## In Progress
 - [ ] Codebase reconciliation via PR on the new repo.
