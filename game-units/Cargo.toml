@@ -24,6 +24,9 @@ bevy = { workspace = true, default-features = false, features = [
 game-physics = { path = "../game-physics" }
 game-world = { path = "../game-world" }
 
+# Physics engine
+avian3d = { workspace = true }
+
 # Math and utilities
 glam = { workspace = true }
 ahash = { workspace = true }
