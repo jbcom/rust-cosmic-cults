@@ -10,6 +10,6 @@ Reconciling the codebase at the new permanent location: `https://github.com/arca
 - **Migrated to New Remote**: Set up `upstream` remote and preparing a pull request to reconcile changes.
 
 ## Next Steps
-- Create PR on the new repository.
-- Ensure all CI/CD workflows are updated for the new location.
-- Verify full WASM build stability.
+- Merge PR #21 to establish the new baseline.
+- Ensure all CI/CD workflows are passing in the new location.
+- Begin implementation of resource gathering and expanded cult mechanics.
