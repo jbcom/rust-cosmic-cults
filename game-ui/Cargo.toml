@@ -1,0 +1,17 @@
+[package]
+name = "game-ui"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+authors.workspace = true
+
+[dependencies]
+bevy = { workspace = true, features = ["default"] }
+game-world = { path = "../game-world" }
+game-units = { path = "../game-units" }

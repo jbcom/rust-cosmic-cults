@@ -11,6 +11,7 @@ game-world = { path = "../game-world" }
 game-units = { path = "../game-units" }
 game-combat = { path = "../game-combat" }
 game-ai = { path = "../game-ai" }
+game-ui = { path = "../game-ui" }
 
 # Additional dependencies for examples
 rand = { workspace = true }
