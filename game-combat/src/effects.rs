@@ -58,14 +58,14 @@ pub fn damage_number_system(
     time: Res<Time>,
 ) {
     for (entity, mut transform, mut damage_number) in query.iter_mut() {
-        damage_number.lifetime -= time.delta_seconds();
+        damage_number.lifetime -= time.delta_secs();
 
         if damage_number.lifetime <= 0.0 {
             commands.entity(entity).despawn();
         } else {
             // Float upward and fade
-            transform.translation += damage_number.velocity * time.delta_seconds();
-            damage_number.velocity.y -= 5.0 * time.delta_seconds(); // Gravity
+            transform.translation += damage_number.velocity * time.delta_secs();
+            damage_number.velocity.y -= 5.0 * time.delta_secs(); // Gravity
         }
     }
 }
@@ -111,7 +111,7 @@ pub fn death_effect_system(
     time: Res<Time>,
 ) {
     for (entity, mut effect) in query.iter_mut() {
-        effect.remaining -= time.delta_seconds();
+        effect.remaining -= time.delta_secs();
 
         if effect.remaining <= 0.0 {
             commands.entity(entity).despawn();

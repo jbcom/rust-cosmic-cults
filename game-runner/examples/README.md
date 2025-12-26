@@ -42,6 +42,17 @@ Demonstrates unit formations and group movement.
 cargo run --example formations
 ```
 
+### `fog_of_war`
+Demonstrates the fog of war system with vision and exploration mechanics.
+- Shows hidden, revealed, and visible areas
+- Units and buildings provide vision radius
+- Interactive: Press U to spawn units, L for leaders
+- Camera controls: WASD to move around
+
+```bash
+cargo run --example fog_of_war
+```
+
 ## WASM Examples
 
 To build examples for WASM, use:

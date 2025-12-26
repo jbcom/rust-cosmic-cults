@@ -351,7 +351,7 @@ pub fn decision_system(
     enemy_query: Query<(Entity, &Transform, &Team)>,
     time: Res<Time>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     for (entity, mut decision_maker, transform, unit, team) in query.iter_mut() {
         // Check if it's time to re-evaluate
