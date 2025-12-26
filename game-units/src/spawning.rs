@@ -3,6 +3,7 @@ use crate::{
     AuraType, BaseStats, Experience, Leader, Selectable, Team, Unit, VeteranBonus, VeteranStatus,
     VeteranTier,
 };
+use avian3d::prelude as avian;
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy::render::alpha::AlphaMode;
@@ -189,6 +190,11 @@ pub fn spawn_unit(
                 mask: u32::MAX, // Collide with everything
             },
             SpatialData::new(position), // For spatial indexing
+            // === AVIAN3D PHYSICS COMPONENTS ===
+            avian::RigidBody::Dynamic,
+            avian::LinearVelocity(Vec3::ZERO),
+            avian::AngularVelocity::ZERO,
+            avian::Collider::cylinder(0.5, 1.0), // Cylinder collider for unit
         ))
         .insert((
             // === MOVEMENT & STATS COMPONENTS ===
@@ -471,6 +477,39 @@ pub fn spawn_leader(
             ));
         })
         .id();
+
+    // Add physics components separately to avoid tuple size limit
+    commands.entity(entity).insert((
+        // === PHYSICS COMPONENTS ===
+        MovementController {
+            target_position: None,
+            velocity: Vec3::ZERO,
+            max_speed: 6.0,
+            acceleration: 12.0,
+            rotation_speed: 5.0,
+            path_index: 0,
+            waypoints: Vec::new(),
+            is_moving: false,
+            movement_type: game_physics::MovementType::Ground,
+        },
+        Velocity::default(),
+        AABB::from_size(Vec3::new(1.5, 2.5, 1.5)), // Leaders have bigger collision box
+        Mass::new(2.0),                            // Leaders are heavier
+        Friction::default(),
+        RigidBodyType {
+            body_type: RigidBodyVariant::Dynamic,
+        },
+        CollisionMask {
+            layer: 1,       // Unit layer
+            mask: u32::MAX, // Collide with everything
+        },
+        SpatialData::new(position), // For spatial indexing
+        // === AVIAN3D PHYSICS COMPONENTS ===
+        avian::RigidBody::Dynamic,
+        avian::LinearVelocity(Vec3::ZERO),
+        avian::AngularVelocity::ZERO,
+        avian::Collider::cylinder(0.75, 1.25), // Larger cylinder collider for leader
+    ));
 
     #[cfg(feature = "web")]
     console::log_1(

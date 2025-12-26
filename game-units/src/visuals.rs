@@ -99,12 +99,12 @@ pub fn update_selection_indicators(
 pub fn animate_aura_visuals(time: Res<Time>, mut aura_query: Query<(&mut Transform, &AuraVisual)>) {
     for (mut transform, aura) in aura_query.iter_mut() {
         // Pulsing animation
-        let pulse = (time.elapsed_seconds() * 2.0).sin() * 0.1 + 1.0;
+        let pulse = (time.elapsed_secs() * 2.0).sin() * 0.1 + 1.0;
         let scale = aura.base_radius * pulse;
         transform.scale = Vec3::splat(scale);
 
         // Slow rotation for mystical effect
-        transform.rotate_y(0.5 * time.delta_seconds());
+        transform.rotate_y(0.5 * time.delta_secs());
     }
 }
 
@@ -114,10 +114,10 @@ pub fn animate_leader_platforms(
     mut platform_query: Query<&mut Transform, With<LeaderPlatform>>,
 ) {
     for mut transform in platform_query.iter_mut() {
-        transform.rotate_y(0.3 * time.delta_seconds());
+        transform.rotate_y(0.3 * time.delta_secs());
 
         // Gentle floating motion
-        let float_offset = (time.elapsed_seconds() * 1.5).sin() * 0.1;
+        let float_offset = (time.elapsed_secs() * 1.5).sin() * 0.1;
         transform.translation.y = float_offset;
     }
 }
@@ -352,7 +352,7 @@ pub fn animate_idle_units(
 ) {
     for (mut transform, _unit) in query.iter_mut() {
         // Subtle breathing/idle animation
-        let idle_scale = 1.0 + (time.elapsed_seconds() * 2.0).sin() * 0.02;
+        let idle_scale = 1.0 + (time.elapsed_secs() * 2.0).sin() * 0.02;
         transform.scale = Vec3::splat(idle_scale);
     }
 }
@@ -432,8 +432,8 @@ pub fn update_death_particles(
         particle.lifetime.tick(time.delta());
 
         // Update position with gravity
-        transform.translation += particle.velocity * time.delta_seconds();
-        particle.velocity.y -= 9.8 * time.delta_seconds();
+        transform.translation += particle.velocity * time.delta_secs();
+        particle.velocity.y -= 9.8 * time.delta_secs();
 
         // Scale down over time
         let scale = 1.0 - particle.lifetime.fraction();

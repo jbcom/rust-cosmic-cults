@@ -90,7 +90,7 @@ pub fn selection_system(
     selectable_query: Query<(Entity, &Transform, &Selectable), With<Unit>>,
     mut selected_query: Query<Entity, With<Selected>>,
 ) {
-    let current_time = time.elapsed_seconds();
+    let current_time = time.elapsed_secs();
 
     if input_state.left_mouse_pressed {
         handle_unit_selection(
@@ -225,7 +225,7 @@ pub fn enhanced_movement_system(
                     let steering = (desired_velocity - velocity.linear) * controller.acceleration;
 
                     // Update velocity with steering force
-                    velocity.linear += steering * time.delta_seconds();
+                    velocity.linear += steering * time.delta_secs();
 
                     // Limit velocity to max speed
                     if velocity.linear.length() > controller.max_speed {
@@ -249,7 +249,7 @@ pub fn enhanced_movement_system(
                 let desired_velocity = direction.normalize() * controller.max_speed;
                 let steering = (desired_velocity - velocity.linear) * controller.acceleration;
 
-                velocity.linear += steering * time.delta_seconds();
+                velocity.linear += steering * time.delta_secs();
 
                 // Limit velocity
                 if velocity.linear.length() > controller.max_speed {

@@ -1,4 +1,5 @@
 use crate::components::*;
+use avian3d::prelude as avian;
 use bevy::prelude::*;
 
 // ==============================================================================
@@ -17,7 +18,7 @@ pub fn physics_movement_system(
         Option<&Friction>,
     )>,
 ) {
-    let dt = time.delta_seconds();
+    let dt = time.delta_secs();
 
     for (mut transform, mut velocity, acceleration, mass, friction) in query.iter_mut() {
         let mass_value = mass.map(|m| m.value).unwrap_or(1.0);
@@ -54,12 +55,21 @@ pub fn physics_movement_system(
 }
 
 /// Simple movement system using MovementTarget
+/// Now uses physics-based movement via avian3d LinearVelocity
 pub fn simple_movement_system(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut MovementTarget)>,
+    _time: Res<Time>,
+    mut query: Query<(
+        &Transform,
+        &mut MovementTarget,
+        Option<&mut avian::LinearVelocity>,
+    )>,
 ) {
-    for (mut transform, mut target) in query.iter_mut() {
+    for (transform, mut target, linear_velocity) in query.iter_mut() {
         if target.reached {
+            // Stop movement when target is reached
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = Vec3::ZERO;
+            }
             continue;
         }
 
@@ -69,32 +79,37 @@ pub fn simple_movement_system(
 
         if distance < 0.1 {
             target.reached = true;
-            transform.translation = target_position;
-        } else {
-            let movement = direction.normalize() * target.speed * time.delta_seconds();
-            transform.translation += movement;
-
-            // Rotate to face movement direction
-            if direction.length() > 0.01 {
-                let look_direction = direction.normalize();
-                let target_rotation =
-                    Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
-                transform.rotation = transform
-                    .rotation
-                    .slerp(target_rotation, 5.0 * time.delta_seconds());
+            // Stop movement when target is reached
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = Vec3::ZERO;
             }
+        } else {
+            // Calculate desired velocity
+            let desired_velocity = direction.normalize() * target.speed;
+
+            // Apply velocity through physics engine if available
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = desired_velocity;
+            }
+            // Note: Rotation is still handled via Transform as it's not critical for physics
+            // and allows for smooth interpolation
         }
     }
 }
 
 /// Advanced movement system with pathfinding support
+/// Now uses physics-based movement via avian3d LinearVelocity
 pub fn pathfinding_movement_system(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut MovementController)>,
+    mut query: Query<(
+        &Transform,
+        &mut MovementController,
+        Option<&mut avian::LinearVelocity>,
+    )>,
 ) {
-    let dt = time.delta_seconds();
+    let dt = time.delta_secs();
 
-    for (mut transform, mut controller) in query.iter_mut() {
+    for (transform, mut controller, linear_velocity) in query.iter_mut() {
         // Check if we have a current target
         let current_target = if let Some(target) = controller.target_position {
             target
@@ -107,6 +122,11 @@ pub fn pathfinding_movement_system(
             target
         } else {
             controller.is_moving = false;
+            controller.velocity = Vec3::ZERO;
+            // Stop movement when no target
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = Vec3::ZERO;
+            }
             continue;
         };
 
@@ -125,6 +145,10 @@ pub fn pathfinding_movement_system(
                 controller.waypoints.clear();
                 controller.path_index = 0;
                 controller.velocity = Vec3::ZERO;
+                // Stop movement when path is complete
+                if let Some(mut velocity) = linear_velocity {
+                    velocity.0 = Vec3::ZERO;
+                }
             }
             continue;
         }
@@ -141,34 +165,43 @@ pub fn pathfinding_movement_system(
             controller.velocity = controller.velocity.normalize() * controller.max_speed;
         }
 
-        // Update position
-        transform.translation += controller.velocity * dt;
+        // Apply velocity through physics engine if available
+        if let Some(mut velocity) = linear_velocity {
+            velocity.0 = controller.velocity;
+        }
+        
         controller.is_moving = controller.velocity.length() > 0.1;
 
-        // Rotate to face movement direction
-        if controller.velocity.length() > 0.1 {
-            let look_direction = controller.velocity.normalize();
-            let target_rotation = Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
-            transform.rotation = transform
-                .rotation
-                .slerp(target_rotation, controller.rotation_speed * dt);
-        }
+        // Note: Rotation is still handled via Transform in a separate system for smooth interpolation
     }
 }
 
 /// Path-based movement system with waypoints
+/// Now uses physics-based movement via avian3d LinearVelocity
 pub fn waypoint_movement_system(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut MovementPath)>,
+    _time: Res<Time>,
+    mut query: Query<(
+        &Transform,
+        &mut MovementPath,
+        Option<&mut avian::LinearVelocity>,
+    )>,
 ) {
-    for (mut transform, mut path) in query.iter_mut() {
+    for (transform, mut path, linear_velocity) in query.iter_mut() {
         if !path.is_moving || path.waypoints.is_empty() {
+            // Stop movement when not moving
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = Vec3::ZERO;
+            }
             continue;
         }
 
         if path.current_waypoint_index >= path.waypoints.len() {
             path.is_moving = false;
             path.current_waypoint_index = 0;
+            // Stop movement when path is complete
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = Vec3::ZERO;
+            }
             continue;
         }
 
@@ -182,21 +215,51 @@ pub fn waypoint_movement_system(
             if path.current_waypoint_index >= path.waypoints.len() {
                 path.is_moving = false;
                 path.current_waypoint_index = 0;
+                // Stop movement when path is complete
+                if let Some(mut velocity) = linear_velocity {
+                    velocity.0 = Vec3::ZERO;
+                }
             }
         } else {
-            // Move toward current waypoint
-            let movement = direction.normalize() * path.movement_speed * time.delta_seconds();
-            transform.translation += movement;
+            // Calculate desired velocity
+            let desired_velocity = direction.normalize() * path.movement_speed;
 
-            // Rotate to face movement direction
-            if direction.length() > 0.01 {
-                let look_direction = direction.normalize();
-                let target_rotation =
-                    Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
-                transform.rotation = transform
-                    .rotation
-                    .slerp(target_rotation, 5.0 * time.delta_seconds());
+            // Apply velocity through physics engine if available
+            if let Some(mut velocity) = linear_velocity {
+                velocity.0 = desired_velocity;
             }
+            
+            // Note: Rotation is handled by movement_rotation_system
+        }
+    }
+}
+
+/// Rotation system for units with physics-based movement
+/// Smoothly rotates units to face their movement direction
+pub fn movement_rotation_system(
+    time: Res<Time>,
+    mut query: Query<(
+        &mut Transform,
+        &avian::LinearVelocity,
+        Option<&MovementController>,
+    )>,
+) {
+    let dt = time.delta_secs();
+
+    for (mut transform, velocity, controller) in query.iter_mut() {
+        // Only rotate if moving
+        if velocity.0.length() > 0.1 {
+            let look_direction = velocity.0.normalize();
+            let target_rotation = Quat::from_rotation_y(look_direction.x.atan2(look_direction.z));
+            
+            // Use rotation speed from controller if available, otherwise use default
+            let rotation_speed = controller
+                .map(|c| c.rotation_speed)
+                .unwrap_or(5.0);
+            
+            transform.rotation = transform
+                .rotation
+                .slerp(target_rotation, rotation_speed * dt);
         }
     }
 }
