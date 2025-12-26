@@ -2039,6 +2039,7 @@ name = "game-units"
 version = "0.1.0"
 dependencies = [
  "ahash",
+ "avian3d",
  "bevy",
  "game-physics",
  "game-world",

@@ -190,6 +190,8 @@ pub fn spawn_unit(
                 mask: u32::MAX, // Collide with everything
             },
             SpatialData::new(position), // For spatial indexing
+        ))
+        .insert((
             // === AVIAN3D PHYSICS COMPONENTS ===
             avian::RigidBody::Dynamic,
             avian::Collider::capsule(0.5, 1.5), // Capsule collider: radius 0.5, half-height 1.5
@@ -348,6 +350,8 @@ pub fn spawn_leader(
                 selection_priority: 10,
                 selection_radius: 2.0,
             },
+        ))
+        .insert((
             MovementTarget::new(position.x, position.z, position.z, 6.0),
             MovementPath {
                 waypoints: Vec::new(),
@@ -380,6 +384,8 @@ pub fn spawn_leader(
                     xp_multiplier: 1.0,
                 },
             },
+        ))
+        .insert((
             // === PHYSICS COMPONENTS ===
             MovementController {
                 target_position: None,
@@ -404,6 +410,8 @@ pub fn spawn_leader(
                 mask: u32::MAX,
             },
             SpatialData::new(position),
+        ))
+        .insert((
             // === AVIAN3D PHYSICS COMPONENTS ===
             avian::RigidBody::Dynamic,
             avian::Collider::capsule(0.6, 1.8), // Larger capsule for leaders
@@ -791,6 +799,8 @@ pub fn spawn_unit_from_template(
                 selection_priority: 1,
                 selection_radius: 1.5,
             },
+        ))
+        .insert((
             MovementTarget::new(position.x, position.z, position.z, template.base_speed),
             MovementPath {
                 waypoints: Vec::new(),
@@ -812,6 +822,8 @@ pub fn spawn_unit_from_template(
                 visual_scale: 1.0,
                 bonuses: VeteranBonus::default(),
             },
+        ))
+        .insert((
             // === PHYSICS COMPONENTS ===
             MovementController {
                 target_position: None,
@@ -836,6 +848,8 @@ pub fn spawn_unit_from_template(
                 mask: u32::MAX,
             },
             SpatialData::new(position),
+        ))
+        .insert((
             // === AVIAN3D PHYSICS COMPONENTS ===
             avian::RigidBody::Dynamic,
             avian::Collider::capsule(0.5, 1.5),
